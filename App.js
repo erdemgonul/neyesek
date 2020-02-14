@@ -1,17 +1,78 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import MapView from 'react-native-maps';
-export default function App() {
-  return (
-    <MapView style={{flex:1}}/>
-  );
-}
+import { createAppContainer } from 'react-navigation';
+import { createStackNavigator } from 'react-navigation-stack';
+import { createDrawerNavigator } from 'react-navigation-drawer';
+import HomeScreen from './src/screens/HomeScreen';
+import BetScreen from './src/screens/BetScreen';
+import AuthScreen from './src/screens/AuthScreen';
+import SignupScreen from './src/screens/SignupScreen';
+import SignInScreen from './src/screens/SignInScreen';
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+import { TouchableOpacity } from 'react-native';
+
+import React from 'react';
+import { FontAwesome } from '@expo/vector-icons';
+
+const navigator = createStackNavigator(
+  {
+    Home: HomeScreen,
+    BetScreen: BetScreen,
+    AuthScreen: AuthScreen,
+    SignupScreen: SignupScreen,
+    SignInScreen: SignInScreen
   },
-});
+  {
+    initialRouteName: 'SignInScreen',
+    defaultNavigationOptions: {
+      headerTitleAlign: 'center',
+      headerTitle:'neyesek',
+      cardStyle: {
+        backgroundColor: '#FCFCFC'
+      },
+      headerStyle: {
+        backgroundColor: '#FE4040',
+      },
+      headerTintColor: '#fff',
+      headerTitleStyle: {
+        fontWeight: 'bold',
+      },
+      headerRight: () => (
+        <FontAwesome name="user-circle-o" size={30} style={{ color: 'white', marginRight: 10 }} />
+      ),
+      headerLeft: () => <TouchableOpacity onPress={() => { navigation.openDrawer() }} >
+        <FontAwesome name="navicon" size={30} style={{ color: 'white', marginLeft: 10 }} />
+      </TouchableOpacity>
+    }
+  });
+const drawerNavigator = createDrawerNavigator({
+  Home: {
+    screen: navigator,
+  },
+  AuthScreen: {
+    screen: AuthScreen,
+  }
+},
+  {
+    drawerBackgroundColor: '#292C34',
+    drawerType: 'back',
+    contentOptions: {
+      activeTintColor: 'white',
+      inactiveTintColor: 'white',
+      itemStyle: {
+        borderTopWidth: 1,
+        fontSize: 20,
+        borderColor: 'gray',
+        paddingHorizontal: 10
+      },
+      itemsContainerStyle: {
+        marginTop: 50,
+      },
+      iconContainerStyle: {
+        opacity: 1
+      }
+    }
+  }
+);
+
+
+
+export default createAppContainer(drawerNavigator);
