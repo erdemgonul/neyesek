@@ -29,18 +29,18 @@ const navigator = createStackNavigator(
         backgroundColor: '#FCFCFC'
       },
       headerStyle: {
-        backgroundColor: '#FE4040',
+        backgroundColor: '#FB4D6A',
       },
       headerTintColor: '#fff',
       headerTitleStyle: {
         fontWeight: 'bold',
-      },
+      },/*
       headerRight: () => (
         <FontAwesome name="user-circle-o" size={30} style={{ color: 'white', marginRight: 10 }} />
       ),
-      headerLeft: () => <TouchableOpacity onPress={() => { navigation.openDrawer() }} >
+      /*headerLeft: () => <TouchableOpacity onPress={() => { navigation.openDrawer() }} >
         <FontAwesome name="navicon" size={30} style={{ color: 'white', marginLeft: 10 }} />
-      </TouchableOpacity>
+      </TouchableOpacity>*/
     }
   });
 const drawerNavigator = createDrawerNavigator({
