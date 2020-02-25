@@ -20,7 +20,6 @@ const SearchBar = ({ onChangeSearchText }) => {
 const styles = StyleSheet.create({
     backgroundStyle: {
         flexDirection: "row",
-        backgroundColor: "#676767",
         height: 40,
         marginTop: 15,
         marginBottom: 10,
