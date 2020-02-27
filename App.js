@@ -11,6 +11,7 @@ import { TouchableOpacity } from 'react-native';
 
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
+import ChangeLocation from './src/screens/ChangeLocation';
 
 const navigator = createStackNavigator(
   {
@@ -18,7 +19,8 @@ const navigator = createStackNavigator(
     BetScreen: BetScreen,
     AuthScreen: AuthScreen,
     SignupScreen: SignupScreen,
-    SignInScreen: SignInScreen
+    SignInScreen: SignInScreen,
+    ChangeLocation : ChangeLocation
   },
   {
     initialRouteName: 'SignInScreen',

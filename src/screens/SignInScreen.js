@@ -5,9 +5,7 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from "react-native-slider";
-import SearchBar from '../components/SearchBar';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-const SignInScreen = () => {
+const SignInScreen = ({ route, navigation }) => {
 
   const window = Dimensions.get('window');
   const { width, height } = window;
@@ -17,17 +15,37 @@ const SignInScreen = () => {
   let [markerLocation, setMarkerLocation] = useState(null);
   let [isLoaded, setLoaded] = useState(false);
   let [areaRadius, setAreaRadius] = useState(250);
-  let [searchText, setSearchText] = useState('');
   let [restaurants, setRestaurants] = useState(null);
 
   let mapRef = null;
   useEffect(() => {
-
+    const unsubscribe = navigation.addListener('didFocus', () => {
+        getLocationAsync();
+        /*
+     if(!navigation.getParam('data').geometry){
+        console.log(navigation.getParam('data').geometry);
+        setMarkerLocation({
+          latitude: navigation.getParam('data').geometry.location.lat,
+          longitude: navigation.getParam('data').geometry.location.lng,
+        });
+        setLocation({
+          latitude: navigation.getParam('data').geometry.location.lat,
+          longitude: navigation.getParam('data').geometry.location.lng,
+          latitudeDelta: LATITUD_DELTA,
+          longitudeDelta: LONGITUDE_DELTA,
+        })
+      }
+      */
+      
+    });
     if (Platform.OS === 'android' && !Constants.isDevice) {
 
     } else {
-      getLocationAsync();
+      if (navigation.getParam('data') === undefined) {
+
+      }
     }
+
   }, []);
 
   async function findNearbyRestaurants() {
@@ -55,7 +73,7 @@ const SignInScreen = () => {
     })
     setAreaRadius(value);
 
-    findNearbyRestaurants();
+    //findNearbyRestaurants();
   }
 
 
@@ -85,6 +103,7 @@ const SignInScreen = () => {
     ]
   }
   async function getLocationAsync() {
+    console.log("fuck");
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
       setErrorMessage('Permission to access location was denied');
@@ -104,8 +123,8 @@ const SignInScreen = () => {
     setLoaded(true);
     if (mapRef != null)
       fitZoomArea(250);
-
-    findNearbyRestaurants();
+   
+    //findNearbyRestaurants();
   };
 
   return (
@@ -146,12 +165,11 @@ const SignInScreen = () => {
 
       </View>
 
-
       <View style={{ marginHorizontal: 10 }}>
-        <TouchableOpacity onPress={() => findNearbyRestaurants()} style={styles.buttonStyle}>
+        <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle}>
           <Text style={styles.buttonTextStyle}>Konumu Değiştir</Text>
         </TouchableOpacity>
-        <SearchBar onChangeSearchText={newText => findNearbyRestaurants(newText)} />
+
         <FlatList
           data={restaurants}
           extraData={restaurants}
@@ -165,7 +183,7 @@ const SignInScreen = () => {
       </View>
 
       <View>
-      
+
 
       </View>
     </View>
@@ -173,7 +191,13 @@ const SignInScreen = () => {
 
   );
 }
+SignInScreen.navigationOptions = ({ navigation, route }) => {
+  return {
 
+
+
+  }
+};
 
 const styles = StyleSheet.create({
   container: {

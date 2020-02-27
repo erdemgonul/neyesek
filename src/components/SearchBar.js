@@ -9,7 +9,7 @@ const SearchBar = ({ onChangeSearchText }) => {
     return (
         <View style={styles.backgroundStyle}>
             <Feather name="search" size={30} style={styles.iconStyle} />
-            <TextInput placeholder="search..." onChangeText={newText => onChangeSearchText(newText)}
+            <TextInput placeholder="konum ara..." onChangeText={newText => onChangeSearchText(newText)}
                 style={styles.textInputStyle}
             />
         </View>
@@ -21,8 +21,8 @@ const styles = StyleSheet.create({
     backgroundStyle: {
         flexDirection: "row",
         height: 40,
-        marginTop: 15,
-        marginBottom: 10,
+        marginTop: 5,
+        marginBottom: 5,
         borderRadius: 10
     },
     iconStyle: {
