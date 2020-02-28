@@ -34,12 +34,41 @@ const ChangeLocation = ({ navigation }) => {
     }
   }
   async function changeLocation(location) {
+    /*
     let response = await fetch("https://maps.googleapis.com/maps/api/place/details/json?place_id=" +
     location.place_id +"&fields=name,rating,formatted_phone_number,geometry&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU");
     let responseJson = await response.json();
-   
+   */
+  let locData;
+  if(location==='mylocation'){
+    locData={
+      "geometry":"mylocation"
+    }
+
+  }else{
+    locData={
+      "geometry": {
+        "location": {
+          "lat": 39.95719400000001,
+          "lng": 32.69074640000001,
+        },
+        "viewport":  {
+          "northeast": {
+            "lat": 39.9585429802915,
+            "lng": 32.69209538029151,
+          },
+          "southwest":  {
+            "lat": 39.95584501970851,
+            "lng": 32.68939741970851,
+          },
+        }
+      },
+      "name": "İstanbul Yolu",
+    
+    }
+  }
      navigation.navigate('SignInScreen', {
-      data: responseJson.result
+      data:locData
     });
   }
   return (
@@ -51,7 +80,7 @@ const ChangeLocation = ({ navigation }) => {
           data={autoCompletePlaces}
           extraData={autoCompletePlaces}
           ListHeaderComponent={
-            <TouchableOpacity onPress={() => {changeLocation()}} style={styles.mylocation}>
+            <TouchableOpacity onPress={() => {changeLocation('mylocation')}} style={styles.mylocation}>
               <MaterialIcons name="my-location" size={30} style={styles.mylocationIcon} />
               <Text style={styles.mylocationText}>Şuanki Konumunu Ayarla</Text>
             </TouchableOpacity>

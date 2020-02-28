@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Platform, Text, View, StyleSheet, Dimensions, TouchableOpacity, TextInput, FlatList, SafeAreaView } from 'react-native';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
@@ -18,62 +18,71 @@ const SignInScreen = ({ route, navigation }) => {
   let [restaurants, setRestaurants] = useState(null);
 
   let mapRef = null;
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('didFocus', () => {
-        getLocationAsync();
-        /*
-     if(!navigation.getParam('data').geometry){
-        console.log(navigation.getParam('data').geometry);
-        setMarkerLocation({
-          latitude: navigation.getParam('data').geometry.location.lat,
-          longitude: navigation.getParam('data').geometry.location.lng,
-        });
-        setLocation({
-          latitude: navigation.getParam('data').geometry.location.lat,
-          longitude: navigation.getParam('data').geometry.location.lng,
-          latitudeDelta: LATITUD_DELTA,
-          longitudeDelta: LONGITUDE_DELTA,
-        })
-      }
-      */
-      
+
+  function setLocationAndMarkerLocation(latlng) {
+    setMarkerLocation({
+      latitude: latlng.lat,
+      longitude: latlng.lng,
     });
-    if (Platform.OS === 'android' && !Constants.isDevice) {
+    setLocation({
+      latitude: latlng.lat,
+      longitude: latlng.lng,
+      latitudeDelta: LATITUD_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    });
 
-    } else {
-      if (navigation.getParam('data') === undefined) {
 
-      }
-    }
+  }
+
+  useEffect(() => {
+
+    getLocationAsync();
 
   }, []);
+  useEffect(() => {
 
+    if (navigation.getParam('data')) {
+      if(navigation.getParam('data').geometry==='mylocation'){
+        getLocationAsync();
+      }else
+      setLocationAndMarkerLocation(navigation.getParam('data').geometry.location);
+
+    }
+    
+
+
+  }, [navigation.getParam('data')]);
+  function deneme() {
+    console.log("deneme");
+  }
   async function findNearbyRestaurants() {
     try {
-      let response = await fetch('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location='
-        + location.latitude + ',' + location.longitude + '&radius=' + areaRadius + '&type=restaurant&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU&opennow');
-      let responseJson = await response.json();
+      if (location) {
+        let response = await fetch('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location='
+          + location.latitude + ',' + location.longitude + '&radius=' + areaRadius + '&type=restaurant&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU&opennow');
+        let responseJson = await response.json();
 
+        console.log(responseJson);
+        if (!responseJson.error_message) {
+          setRestaurants(responseJson.results);
 
-      if (!responseJson.error_message) {
-        setRestaurants(responseJson.results);
-        responseJson.results.forEach(element => {
-          console.log(element.name);
-        });
+        }
       }
     } catch (error) {
       console.error(error);
     }
   }
   function fitZoomArea(value) {
-    const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
+    if (mapRef != null) {
+      const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
 
-    mapRef.fitToCoordinates(points, {
-      animated: true
-    })
-    setAreaRadius(value);
+      mapRef.fitToCoordinates(points, {
+        animated: true
+      })
+      setAreaRadius(value);
 
-    //findNearbyRestaurants();
+      findNearbyRestaurants();
+    }
   }
 
 
@@ -110,6 +119,7 @@ const SignInScreen = ({ route, navigation }) => {
     }
 
     let x = await Location.getCurrentPositionAsync({});
+
     setLocation({
       latitude: x.coords.latitude,
       longitude: x.coords.longitude,
@@ -120,11 +130,12 @@ const SignInScreen = ({ route, navigation }) => {
       latitude: x.coords.latitude,
       longitude: x.coords.longitude,
     });
+    fitZoomArea(250);
+
     setLoaded(true);
-    if (mapRef != null)
-      fitZoomArea(250);
-   
-    //findNearbyRestaurants();
+
+
+    findNearbyRestaurants();
   };
 
   return (
@@ -132,60 +143,61 @@ const SignInScreen = ({ route, navigation }) => {
     <View style={styles.container}>
 
       {isLoaded &&
-        <MapView style={styles.map} initialRegion={location} ref={(ref) => mapRef = ref}>
+        <View>
+          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
 
-          <Marker
-            coordinate={markerLocation}
-            title={'deneme'}
-          ></Marker>
-          <Circle
-            center={markerLocation}
-            radius={areaRadius}
-            fillColor="rgba(0, 0, 900, 0.1)"
-            strokeColor="rgba(0,0,0,0.1)"
-            zIndex={2}
+            <Marker
+              coordinate={markerLocation}
+              title={'deneme'}
+            ></Marker>
+            <Circle
+              center={markerLocation}
+              radius={areaRadius}
+              fillColor="rgba(0, 0, 900, 0.1)"
+              strokeColor="rgba(0,0,0,0.1)"
+              zIndex={2}
 
-          />
-        </MapView>
+            />
+          </MapView>
 
-      }
-      <View style={{ marginHorizontal: 10 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10, }}>
 
-          <Text style={{ fontSize: 16 }}>Mesafeyi Ayarlayın</Text>
-          <Text style={{}}>{areaRadius} METRE</Text>
-        </View>
-        <Slider
-          onValueChange={value => fitZoomArea(value)}
-          minimumValue={250}
-          maximumValue={2000}
-          value={areaRadius}
-          step={250}
-        />
+          <View style={{ marginHorizontal: 10 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10, }}>
 
-      </View>
-
-      <View style={{ marginHorizontal: 10 }}>
-        <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle}>
-          <Text style={styles.buttonTextStyle}>Konumu Değiştir</Text>
-        </TouchableOpacity>
-
-        <FlatList
-          data={restaurants}
-          extraData={restaurants}
-          renderItem={({ item }) => (
-            <View style={styles.restaurantView}>
-              <Text style={styles.restaurantNames}>{item.name}</Text>
+              <Text style={{ fontSize: 16 }}>Mesafeyi Ayarlayın</Text>
+              <Text style={{}}>{areaRadius} METRE</Text>
             </View>
+            <Slider
+              onValueChange={value => fitZoomArea(value)}
+              minimumValue={250}
+              maximumValue={2000}
+              value={areaRadius}
+              step={250}
+            />
 
-          )}
-        />
-      </View>
+          </View>
 
-      <View>
+          <View style={{ marginHorizontal: 10 }}>
+            <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle}>
+              <Text style={styles.buttonTextStyle}>Konumu Değiştir</Text>
+            </TouchableOpacity>
 
+            <FlatList
+              data={restaurants}
+              extraData={restaurants}
+              renderItem={({ item }) => (
+                <View style={styles.restaurantView}>
+                  <Text style={styles.restaurantNames}>{item.name}</Text>
+                </View>
 
-      </View>
+              )}
+            />
+          </View>
+
+          <View>
+
+          </View>
+        </View>}
     </View>
 
 

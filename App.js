@@ -24,6 +24,7 @@ const navigator = createStackNavigator(
   },
   {
     initialRouteName: 'SignInScreen',
+    unmountInactiveRoutes: true,
     defaultNavigationOptions: {
       headerTitleAlign: 'center',
       headerTitle:'neyesek',
