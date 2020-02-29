@@ -23,53 +23,34 @@ const ChangeLocation = ({ navigation }) => {
       let response = await fetch("https://maps.googleapis.com/maps/api/place/autocomplete/json?components=country:tr&input="
         + input + "&types=geocode&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU");
       let responseJson = await response.json();
-
       setAutoCompletePlaces(responseJson.predictions);
-      responseJson.predictions.forEach(element => {
-        console.log(element.description);
-      });
+
 
     } catch (error) {
       console.error(error);
     }
   }
   async function changeLocation(location) {
-    /*
-    let response = await fetch("https://maps.googleapis.com/maps/api/place/details/json?place_id=" +
-    location.place_id +"&fields=name,rating,formatted_phone_number,geometry&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU");
-    let responseJson = await response.json();
-   */
-  let locData;
-  if(location==='mylocation'){
-    locData={
-      "geometry":"mylocation"
-    }
-
-  }else{
-    locData={
-      "geometry": {
-        "location": {
-          "lat": 39.95719400000001,
-          "lng": 32.69074640000001,
-        },
-        "viewport":  {
-          "northeast": {
-            "lat": 39.9585429802915,
-            "lng": 32.69209538029151,
-          },
-          "southwest":  {
-            "lat": 39.95584501970851,
-            "lng": 32.68939741970851,
-          },
-        }
-      },
-      "name": "İstanbul Yolu",
     
+   
+  
+    let locData;
+    if(location==='mylocation'){
+      locData={
+        "geometry":"mylocation"
+      }
+  
+    }else{
+      let response = await fetch("https://maps.googleapis.com/maps/api/place/details/json?place_id=" +
+      location.place_id +"&fields=name,rating,formatted_phone_number,geometry&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU");
+      let responseJson = await response.json();
+     console.log(responseJson);
+      locData=responseJson.result
     }
-  }
-     navigation.navigate('SignInScreen', {
-      data:locData
-    });
+    console.log("deneme");
+       navigation.navigate('HomeScreen', {
+        data:locData
+      });
   }
   return (
 

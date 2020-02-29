@@ -1,211 +1,260 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import SearchBar from '../components/SearchBar.js';
-import CardView from '../components/CardView';
-import {FontAwesome} from  '@expo/vector-icons';
-const HomeScreen = ( {navigation}) => {
-    let [searchText, setSearchText] = useState('');
-    let [currentBet, setCurrentBet] = useState(null);
-    let [swipeablePanelActive, setSwipeablePanelActive] = useState(false);
+import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { Platform, Text, View, StyleSheet, Dimensions, TouchableOpacity, TextInput, FlatList, SafeAreaView } from 'react-native';
+import Constants from 'expo-constants';
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
+import MapView, { Marker, Circle } from 'react-native-maps';
+import Slider from "@brlja/react-native-slider";
+const HomeScreen = ({ route, navigation }) => {
+
+  const window = Dimensions.get('window');
+  const { width, height } = window;
+  let LATITUD_DELTA = 0.009;
+  const LONGITUDE_DELTA = LATITUD_DELTA / 1000 * (width / height)
+  let [location, setLocation] = useState(null);
+  let [markerLocation, setMarkerLocation] = useState(null);
+  let [isLoaded, setLoaded] = useState(false);
+  let [areaRadius, setAreaRadius] = useState(250);
+  let [restaurants, setRestaurants] = useState(null);
+
+  let mapRef = null;
+
+  function setLocationAndMarkerLocation(latlng) {
+    setMarkerLocation({
+      latitude: latlng.lat,
+      longitude: latlng.lng,
+    });
+    setLocation({
+      latitude: latlng.lat,
+      longitude: latlng.lng,
+      latitudeDelta: LATITUD_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    });
 
 
-    const colorsBackground = ['#D90847', '#F55F4E', '#0096ff', '#9b89f8'];
-    const questions = [
-        {
-            title: 'fenerbahçe yarın kazanır mı?',
-            description: 'taraftar yarınki maçı devam mı tamam mı maçı olarak görüyor, sizce sonuç ne olacak?',
-            choices: [
-                {
-                    choice: 'Kazanır',
-                    rate: '1.20'
-                },
-                {
-                    choice: 'Berabere',
-                    rate: '1.50'
-                },
-                {
-                    choice: 'Kaybeder',
-                    rate: '2.20'
-                }
-            ]
-        },
-        {
-            title: 'başakşehir yarın kazanır mı?',
-            description: 'taraftar yarınki maçı devam mı tamam mı maçı olarak görüyor, sizce sonuç ne olacak?',
-            choices: [
-                {
-                    choice: 'Kazanır',
-                    rate: '1.20'
-                },
-                {
-                    choice: 'Berabere',
-                    rate: '1.50'
-                },
-                {
-                    choice: 'Kaybeder',
-                    rate: '2.20'
-                }
-            ]
-        },
-        {
-            title: 'galatasaray yarın kazanır mı?',
-            description: 'taraftar yarınki maçı devam mı tamam mı maçı olarak görüyor, sizce sonuç ne olacak?',
-            choices: [
-                {
-                    choice: 'Kazanır',
-                    rate: '1.20'
-                },
-                {
-                    choice: 'Berabere',
-                    rate: '1.50'
-                },
-                {
-                    choice: 'Kaybeder',
-                    rate: '2.20'
-                }
-            ]
-        },
-        {
-            title: 'beşiktaş yarın kazanır mı?',
-            description: 'taraftar yarınki maçı devam mı tamam mı maçı olarak görüyor, sizce sonuç ne olacak?',
-            choices: [
-                {
-                    choice: 'Kazanır',
-                    rate: '1.20'
-                },
-                {
-                    choice: 'Berabere',
-                    rate: '1.50'
-                },
-                {
-                    choice: 'Kaybeder',
-                    rate: '2.20'
-                }
-            ]
-        },
-    ];
-
-    openPanel = () =>
-        setSwipeablePanelActive(true);
-
-    closePanel = () =>
-        setSwipeablePanelActive(false);
-
-    function addBet(bet) {
-        navigation.navigate('BetScreen');
-        setCurrentBet(bet);
-        openPanel();
-        
-            
-    };
+  }
+  //first screen loaded
+  useEffect(() => {
+    getLocationAsync();
+  }, []);
+  //if location changes
+  useEffect(() => {
+    findNearbyRestaurants();
+  }, [location]);
+  //if area radius changes
+  useEffect(() => {
+    fitZoomArea(areaRadius);
+  }, [areaRadius]);
 
 
-    return (
+  //if new location selected
+  useEffect(() => {
 
-        <View style={{ flex: 1 }}>
-            <View style={{ flex: 1, marginHorizontal: 10, backgroundColor: '#292C34' }}>
+    if (navigation.getParam('data')) {
+      if(navigation.getParam('data').geometry==='mylocation')
+        getLocationAsync();
+      else
+      setLocationAndMarkerLocation(navigation.getParam('data').geometry.location);
+    }
+  }, [navigation.getParam('data')]);
 
-                <SearchBar onChangeSearchText={newText => setSearchText(newText)} />
-                <FlatList ListHeaderComponent={<Text style={styles.header}>Günün Tahminleri</Text>}
-                    data={questions}
-                    keyExtractor={
-                        question => question.title
-                    }
-                    renderItem={({ item }) =>
+  async function findNearbyRestaurants() {
+    
+    try {
+      if (location) {
+        let response = await fetch('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location='
+          + location.latitude + ',' + location.longitude + '&radius=' + areaRadius + '&type=restaurant&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU&opennow');
+        let responseJson = await response.json();
 
-                        <CardView question={item} backgroundColor={colorsBackground[questions.indexOf(item) % colorsBackground.length]}
-                            clickedBet={newBet => addBet(newBet)}
-                        />
-                    }
-                />
+        if (!responseJson.error_message) {
+          setRestaurants(responseJson.results);
+
+        }
+      }else{
+        console.log("has");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+   function fitZoomArea(value) {
+     if(value%250==0){ // DÜZELTMEYİ UNUTMA
+        setAreaRadius(value);
+     
+    if (mapRef != null) {
+      const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
+
+      mapRef.fitToCoordinates(points, {
+        animated: true
+      })
+      findNearbyRestaurants();
+    }
+  }
+  }
 
 
+ 
+  async function getLocationAsync() {
+    let { status } = await Permissions.askAsync(Permissions.LOCATION);
+    if (status !== 'granted') {
+      setErrorMessage('Permission to access location was denied');
+    }
+
+    let x = await Location.getCurrentPositionAsync({});
+
+    setLocation({
+      latitude: x.coords.latitude,
+      longitude: x.coords.longitude,
+      latitudeDelta: LATITUD_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    });
+    setMarkerLocation({
+      latitude: x.coords.latitude,
+      longitude: x.coords.longitude,
+    });
+    fitZoomArea(250);
+   
+    setLoaded(true);
+
+
+  };
+
+  return (
+
+    <SafeAreaView style={styles.container}>
+
+      {isLoaded &&
+        <View style={{flex:1}}>
+          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
+
+            <Marker
+              coordinate={markerLocation}
+              title={'deneme'}
+            ></Marker>
+            <Circle
+              center={markerLocation}
+              radius={areaRadius}
+              fillColor="rgba(0, 0, 900, 0.1)"
+              strokeColor="rgba(0,0,0,0.1)"
+              zIndex={2}
+
+            />
+          </MapView>
+
+
+          <View style={{ marginHorizontal: 10 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10,marginHorizontal:5 }}>
+
+              <Text style={{ fontSize: 16 }}>Mesafeyi Ayarlayın</Text>
+              <Text style={{}}>{areaRadius} METRE</Text>
             </View>
-            {/*
-            <SwipeablePanel
-                 
-                noBackgroundOpacity
-                barStyle={{backgroundColor:'#e2e4e9'}}
-                closeOnTouchOutside
-                style={{backgroundColor:'#383c47',borderRadius:30}}
-                isActive={swipeablePanelActive}
-                onClose={closePanel}
-                onPressCloseButton={closePanel}
-            >
+            <Slider
+              onValueChange={value => fitZoomArea(value)}
+              minimumValue={250}
+              maximumValue={2000}
+              value={areaRadius}
+              step={250}
+              thumbTintColor={'#FB4D6A'}
+              trackStyle={{backgroundColor:'#EBEBEB'}}
+              minimumTrackTintColor={'#dbdbdb'}
+            />
 
-                {currentBet != null &&
-                    <View style={{ marginHorizontal: 20, borderWidth: 0, height: 200, borderRadius: 20, padding: 20,paddingTop:5, borderColor: '#gagaga' }}>
-                        <Text style={{ color:'white',textAlign: "center", fontSize: 18, fontWeight: "bold" }}>{currentBet.title}</Text>
+          </View>
 
-                        <View style={{flexDirection:"row",marginTop:20}}>
-                        <Text style={{color:'white', fontSize: 12, flex:1,fontWeight:"bold" }}>Tahmin:</Text>
+          <View style={{ marginHorizontal: 10,flex:1 }}>
+            <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle}>
+              <Text style={styles.buttonTextStyle}>Konumu Değiştir</Text>
+            </TouchableOpacity>
+           <View style={{paddingVertical:5,}}>
+            <Text style={{fontSize:18,}}>Açık Restaurantlar</Text>
+            </View>
+            <FlatList style={{marginBottom:10}}
+              data={restaurants}
+              extraData={restaurants}
+              renderItem={({ item }) => (
+                <View style={styles.restaurantView}>
+                  <Text style={styles.restaurantNames}>{item.name}</Text>
+                </View>
 
-                        <Text style={{color:'white', fontSize: 12 }}>{currentBet.clicked.choice}</Text>
-                        </View>
-                        <View style={{flexDirection:"row",marginTop:10}}>
-                        <Text style={{color:'white', fontSize: 12, flex:1,fontWeight:"bold" }}>Tahmin oranı:</Text>
+              )}
+         
+            />
+         
+           
+          </View>
 
-                        <Text style={{color:'white', fontSize: 12 }}>{currentBet.clicked.rate}</Text>
-                        </View>
-                        
-                        <View style={{ flexDirection: "row",marginTop:40 }}>
-                            <View style={{
-                                flexDirection: "row",
-                                backgroundColor: "#eaeaea",
-                                height: 40,
-                                flex:1,
-                                marginRight: 5,
-                                marginBottom: 10,
-                                borderRadius: 10
-                            }}>
-                                <FontAwesome name="money" size={30} style={{
-                                    alignSelf: "center",
-                                    marginLeft: 10
-                                }} />
-                                <TextInput placeholder="jeton..."
-                                    style={{
-                                        fontSize: 18,
-                                        marginLeft: 10,
-                                        color: '#272727',
-                                        width: 100
-                                    }}
-                                />
+          <View>
 
-                            </View>
-                            <Text style={{fontSize:20,textAlignVertical:"center",height:40,marginRight:20,marginLeft:10}}>/ 100</Text>
-                            <TouchableOpacity style={{ backgroundColor: '#00ae7d', width: 100, height: 40, borderRadius: 10, justifyContent: "center" }}>
-                                <Text style={{ alignSelf: "center", textAlign: "center", color: '#FAFAFA', fontWeight: "bold" }}>ONAYLA</Text>
-
-                            </TouchableOpacity>
-                        </View>
+          </View>
+        </View>}
+    </SafeAreaView>
 
 
+  );
 
-                    </View>
-                }
+  function get4PointsAroundCircumference(latitude, longitude, radius) {
+    const earthRadius = 6378.1 //Km
+    const lat0 = latitude + (-radius / earthRadius) * 1 / 1000 * (180 / Math.PI)
+    const lat1 = latitude + (radius / earthRadius) * 1 / 1000 * (180 / Math.PI)
+    const lng0 = longitude + (-radius / earthRadius) * 1 / 1000 * (180 / Math.PI) / Math.cos(latitude * Math.PI / 180);
+    const lng1 = longitude + (radius / earthRadius) * 1 / 1000 * (180 / Math.PI) / Math.cos(latitude * Math.PI / 180);
 
-            </SwipeablePanel>
-                */}
-        </View>
-    );
+    return [{
+      latitude: lat0,
+      longitude: longitude
+    }, //bottom
+    {
+      latitude: latitude,
+      longitude: lng0
+    }, //left
+    {
+      latitude: lat1,
+      longitude: longitude
+    }, //top
+    {
+      latitude: latitude,
+      longitude: lng1
+    } //right
+    ]
+  }
+}
+HomeScreen.navigationOptions = ({ navigation, route }) => {
+  return {
+
+
+
+  }
 };
-HomeScreen.navigationOptions = ({ navigation }) => {
-    return {
-        title:'PredictApp',
-        headerLeft: () => <TouchableOpacity  onPress={() => { navigation.openDrawer() }} >
-             <FontAwesome name="navicon" size={30} style={{ color: 'white', marginLeft: 10 }} />
-        </TouchableOpacity>
-        
-    }
-};
+
 const styles = StyleSheet.create({
-    header: {
-        fontSize: 20,
-        fontWeight: "bold",
-        paddingTop: 10,
-        color: '#ffffff',
-        marginBottom: 10
-    }
+  container: {
+    flex: 1,
+
+  },
+  map: {
+    flex:1/2,//height 300 def
+  },
+  buttonStyle: {
+    borderRadius:10,
+    backgroundColor:"#9bdeac"
+  },
+  buttonTextStyle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    textAlign: "center",
+    paddingVertical: 10
+  },
+  restaurantView: {
+
+    borderTopWidth: 1,
+    borderColor: '#EBEBEB',
+  },
+  restaurantNames: {
+    fontSize: 15,
+    marginVertical: 5,
+    marginHorizontal: 10,
+  }
 });
+
 
 export default HomeScreen;
