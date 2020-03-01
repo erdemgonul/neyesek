@@ -12,6 +12,7 @@ import { TouchableOpacity } from 'react-native';
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import ChangeLocation from './src/screens/ChangeLocation';
+import RestaurantScreen from './src/screens/RestaurantScreen';
 
 const navigator = createStackNavigator(
   {
@@ -20,10 +21,11 @@ const navigator = createStackNavigator(
     AuthScreen: AuthScreen,
     SignupScreen: SignupScreen,
     SignInScreen: SignInScreen,
-    ChangeLocation : ChangeLocation
+    ChangeLocation : ChangeLocation,
+    RestaurantScreen:RestaurantScreen
   },
   {
-    initialRouteName: 'SignInScreen',
+    initialRouteName: 'Home',
     unmountInactiveRoutes: true,
     defaultNavigationOptions: {
       headerTitleAlign: 'center',

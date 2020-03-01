@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { Platform, Text, View, StyleSheet, Dimensions, TouchableOpacity, TextInput, FlatList, SafeAreaView } from 'react-native';
-import Constants from 'expo-constants';
+import React, { useState, useEffect} from 'react';
+import {Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
@@ -30,8 +29,6 @@ const HomeScreen = ({ route, navigation }) => {
       latitudeDelta: LATITUD_DELTA,
       longitudeDelta: LONGITUDE_DELTA,
     });
-
-
   }
   //first screen loaded
   useEffect(() => {
@@ -45,8 +42,6 @@ const HomeScreen = ({ route, navigation }) => {
   useEffect(() => {
     fitZoomArea(areaRadius);
   }, [areaRadius]);
-
-
   //if new location selected
   useEffect(() => {
 
@@ -71,7 +66,6 @@ const HomeScreen = ({ route, navigation }) => {
 
         }
       }else{
-        console.log("has");
       }
     } catch (error) {
       console.error(error);
@@ -165,7 +159,7 @@ const HomeScreen = ({ route, navigation }) => {
             <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle}>
               <Text style={styles.buttonTextStyle}>Konumu Değiştir</Text>
             </TouchableOpacity>
-           <View style={{paddingVertical:5,}}>
+           <View style={{paddingVertical:10,marginBottom:15}}>
             <Text style={{fontSize:18,}}>Açık Restaurantlar</Text>
             </View>
             <FlatList style={{marginBottom:10}}
@@ -173,7 +167,9 @@ const HomeScreen = ({ route, navigation }) => {
               extraData={restaurants}
               renderItem={({ item }) => (
                 <View style={styles.restaurantView}>
+                  <TouchableOpacity onPress={() => { navigation.navigate('RestaurantScreen',{restaurant:item})}}>
                   <Text style={styles.restaurantNames}>{item.name}</Text>
+                  </TouchableOpacity>
                 </View>
 
               )}
@@ -184,7 +180,9 @@ const HomeScreen = ({ route, navigation }) => {
           </View>
 
           <View>
-
+          <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle,{backgroundColor:'#FB4D6A',paddingVertical:5}}>
+              <Text style={styles.buttonTextStyle}>Tüm Restaurantları Listele</Text>
+            </TouchableOpacity>
           </View>
         </View>}
     </SafeAreaView>
@@ -245,7 +243,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10
   },
   restaurantView: {
-
+    paddingVertical:8,
     borderTopWidth: 1,
     borderColor: '#EBEBEB',
   },
