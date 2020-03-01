@@ -24,10 +24,10 @@ const ChangeLocation = ({ navigation }) => {
         + input + "&types=geocode&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU");
       let responseJson = await response.json();
       setAutoCompletePlaces(responseJson.predictions);
-
+      console.log(responseJson);
 
     } catch (error) {
-      console.error(error);
+      console.error(esrror);
     }
   }
   async function changeLocation(location) {

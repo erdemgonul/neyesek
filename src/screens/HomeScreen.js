@@ -1,9 +1,11 @@
-import React, { useState, useEffect} from 'react';
-import {Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from "@brlja/react-native-slider";
+import { AntDesign } from '@expo/vector-icons';
+
 const HomeScreen = ({ route, navigation }) => {
 
   const window = Dimensions.get('window');
@@ -46,15 +48,15 @@ const HomeScreen = ({ route, navigation }) => {
   useEffect(() => {
 
     if (navigation.getParam('data')) {
-      if(navigation.getParam('data').geometry==='mylocation')
+      if (navigation.getParam('data').geometry === 'mylocation')
         getLocationAsync();
       else
-      setLocationAndMarkerLocation(navigation.getParam('data').geometry.location);
+        setLocationAndMarkerLocation(navigation.getParam('data').geometry.location);
     }
   }, [navigation.getParam('data')]);
 
   async function findNearbyRestaurants() {
-    
+
     try {
       if (location) {
         let response = await fetch('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location='
@@ -65,29 +67,29 @@ const HomeScreen = ({ route, navigation }) => {
           setRestaurants(responseJson.results);
 
         }
-      }else{
+      } else {
       }
     } catch (error) {
       console.error(error);
     }
   }
-   function fitZoomArea(value) {
-     if(value%250==0){ // DÜZELTMEYİ UNUTMA
-        setAreaRadius(value);
-     
-    if (mapRef != null) {
-      const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
+  function fitZoomArea(value) {
+    if (value % 250 == 0) { // DÜZELTMEYİ UNUTMA
+      setAreaRadius(value);
 
-      mapRef.fitToCoordinates(points, {
-        animated: true
-      })
-      findNearbyRestaurants();
+      if (mapRef != null) {
+        const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
+
+        mapRef.fitToCoordinates(points, {
+          animated: true
+        })
+        findNearbyRestaurants();
+      }
     }
   }
-  }
 
 
- 
+
   async function getLocationAsync() {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
@@ -107,7 +109,7 @@ const HomeScreen = ({ route, navigation }) => {
       longitude: x.coords.longitude,
     });
     fitZoomArea(250);
-   
+
     setLoaded(true);
 
 
@@ -118,7 +120,7 @@ const HomeScreen = ({ route, navigation }) => {
     <SafeAreaView style={styles.container}>
 
       {isLoaded &&
-        <View style={{flex:1}}>
+        <View style={{ flex: 1 }}>
           <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
 
             <Marker
@@ -137,7 +139,7 @@ const HomeScreen = ({ route, navigation }) => {
 
 
           <View style={{ marginHorizontal: 10 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10,marginHorizontal:5 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10, marginHorizontal: 5 }}>
 
               <Text style={{ fontSize: 16 }}>Mesafeyi Ayarlayın</Text>
               <Text style={{}}>{areaRadius} METRE</Text>
@@ -149,38 +151,54 @@ const HomeScreen = ({ route, navigation }) => {
               value={areaRadius}
               step={250}
               thumbTintColor={'#FB4D6A'}
-              trackStyle={{backgroundColor:'#EBEBEB'}}
+              trackStyle={{ backgroundColor: '#EBEBEB' }}
               minimumTrackTintColor={'#dbdbdb'}
             />
 
           </View>
 
-          <View style={{ marginHorizontal: 10,flex:1 }}>
+          <View style={{ marginHorizontal: 10, flex: 1 }}>
             <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle}>
               <Text style={styles.buttonTextStyle}>Konumu Değiştir</Text>
             </TouchableOpacity>
-           <View style={{paddingVertical:10,marginBottom:15}}>
-            <Text style={{fontSize:18,}}>Açık Restaurantlar</Text>
+            <View style={{ paddingVertical: 10, marginBottom: 15 }}>
+              <Text style={{ fontSize: 18, }}>Açık Restaurantlar</Text>
             </View>
-            <FlatList style={{marginBottom:10}}
+            <FlatList style={{ marginBottom: 10 }}
               data={restaurants}
               extraData={restaurants}
               renderItem={({ item }) => (
                 <View style={styles.restaurantView}>
-                  <TouchableOpacity onPress={() => { navigation.navigate('RestaurantScreen',{restaurant:item})}}>
-                  <Text style={styles.restaurantNames}>{item.name}</Text>
+                  <TouchableOpacity style={{flexDirection:"row",justifyContent:"space-between" }}
+                   onPress={() => { navigation.navigate('RestaurantScreen', 
+                   { restaurant: item }) }}>
+                    <Text style={styles.restaurantNames}>{item.name}</Text>
+                    <View style={{ alignSelf:"flex-end",
+                      flexDirection: "row", backgroundColor: '#5abab7',
+                      borderRadius: 20, width: 70
+                    }}>
+                      <AntDesign name="star" size={15}
+                        style={{
+                          color: 'white',marginLeft:10, alignSelf: "center",
+                        }} />
+                      <Text style={{
+                        fontSize: 12, paddingLeft: 10, paddingVertical: 5, color: 'white',
+                        fontWeight: "bold"
+                      }}>{item.rating}</Text>
+
+                    </View>
                   </TouchableOpacity>
                 </View>
 
               )}
-         
+
             />
-         
-           
+
+
           </View>
 
           <View>
-          <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle,{backgroundColor:'#FB4D6A',paddingVertical:5}}>
+            <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={styles.buttonStyle, { backgroundColor: '#FB4D6A', paddingVertical: 5 }}>
               <Text style={styles.buttonTextStyle}>Tüm Restaurantları Listele</Text>
             </TouchableOpacity>
           </View>
@@ -230,11 +248,11 @@ const styles = StyleSheet.create({
 
   },
   map: {
-    flex:1/2,//height 300 def
+    flex: 1 / 2,//height 300 def
   },
   buttonStyle: {
-    borderRadius:10,
-    backgroundColor:"#9bdeac"
+    borderRadius: 10,
+    backgroundColor: "#9bdeac"
   },
   buttonTextStyle: {
     color: '#FFFFFF',
@@ -243,7 +261,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10
   },
   restaurantView: {
-    paddingVertical:8,
+    paddingVertical: 8,
     borderTopWidth: 1,
     borderColor: '#EBEBEB',
   },

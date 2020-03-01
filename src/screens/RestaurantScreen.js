@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
-import * as Location from 'expo-location';
-import * as Permissions from 'expo-permissions';
-import MapView, { Marker, Circle } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import { Linking } from 'expo';
-const RestaurantScreen = ({ route, navigation }) => {
+const RestaurantScreen = ({ navigation }) => {
 
   const window = Dimensions.get('window');
   const { width, height } = window;
@@ -16,17 +14,13 @@ const RestaurantScreen = ({ route, navigation }) => {
   let [isLoaded, setLoaded] = useState(false);
   let [restaurant, setRestaurant] = useState(null);
 
-  let mapRef = null;
-
   //first screen loaded
   useEffect(() => {
-    console.log("hwy" + navigation.getParam('restaurant'));
   }, []);
   //when page loaded
   useEffect(() => {
 
     if (navigation.getParam('restaurant')) {
-      console.log(navigation.getParam('restaurant'));
       setRestaurant(navigation.getParam('restaurant'));
 
       setLocationAndMarkerLocation(navigation.getParam('restaurant').geometry.location);
