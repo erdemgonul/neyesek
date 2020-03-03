@@ -8,6 +8,7 @@ import { AntDesign } from '@expo/vector-icons';
 
 const HomeScreen = ({ route, navigation }) => {
   const apiKey='AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
+  const url='https://neyesekback.herokuapp.com';
   const window = Dimensions.get('window');
   const { width, height } = window;
   let LATITUD_DELTA = 0.009;
@@ -65,13 +66,41 @@ const HomeScreen = ({ route, navigation }) => {
         let responseJson = await response.json();
         if (!responseJson.error_message)
           setRestaurants(responseJson.results);
-        
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
 
+          fetch(url+'/api/addRestaurants', {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              restaurants: responseJson.results
+            }),
+          });
+          }
+        } catch (error) {
+          console.error(error);
+        }
+  }
+  async function getPlaceDetails(place_id) {
+    try {
+          let response=await fetch(url+'/api/getPlaceDetails', {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              rest_id: place_id
+            }),
+          });
+          let responseJson = await response.json();
+          navigation.navigate('RestaurantScreen', 
+                   { restaurant: responseJson })
+        } catch (error) {
+          console.error(error);
+        }
+  }
   function filterNearbyRestaurants() {
     let restaurantArray=[];
           restaurants.forEach(restaurant => {
@@ -117,6 +146,7 @@ const HomeScreen = ({ route, navigation }) => {
       latitude: x.coords.latitude,
       longitude: x.coords.longitude,
     });
+    findNearbyRestaurants();
     fitZoomArea(250);
 
     setLoaded(true);
@@ -179,8 +209,7 @@ const HomeScreen = ({ route, navigation }) => {
               renderItem={({ item }) => (
                 <View style={styles.restaurantView}>
                   <TouchableOpacity style={{flexDirection:"row",justifyContent:"space-between" }}
-                   onPress={() => { navigation.navigate('RestaurantScreen', 
-                   { restaurant: item }) }}>
+                   onPress={() => { getPlaceDetails(item.place_id)}}>
                     <Text style={styles.restaurantNames}>{item.name}</Text>
                     <View style={{ alignSelf:"flex-end",
                       flexDirection: "row", backgroundColor: '#5abab7',

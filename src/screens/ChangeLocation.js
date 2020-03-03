@@ -7,7 +7,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 const ChangeLocation = ({ navigation }) => {
 
   let [autoCompletePlaces, setAutoCompletePlaces] = useState('');
-
+  const apiKey='AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   useEffect(() => {
     autoComplete('İstanbul');
     if (Platform.OS === 'android' && !Constants.isDevice) {
@@ -21,7 +21,7 @@ const ChangeLocation = ({ navigation }) => {
   async function autoComplete(input) {
     try {
       let response = await fetch("https://maps.googleapis.com/maps/api/place/autocomplete/json?components=country:tr&input="
-        + input + "&types=geocode&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU");
+        + input + "&types=geocode&key="+ apiKey);
       let responseJson = await response.json();
       setAutoCompletePlaces(responseJson.predictions);
       console.log(responseJson);
@@ -42,13 +42,13 @@ const ChangeLocation = ({ navigation }) => {
   
     }else{
       let response = await fetch("https://maps.googleapis.com/maps/api/place/details/json?place_id=" +
-      location.place_id +"&fields=name,rating,formatted_phone_number,geometry&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU");
+      location.place_id +"&fields=name,rating,formatted_phone_number,geometry&key="+apiKey);
       let responseJson = await response.json();
      console.log(responseJson);
       locData=responseJson.result
     }
     console.log("deneme");
-       navigation.navigate('HomeScreen', {
+       navigation.navigate('Home', {
         data:locData
       });
   }

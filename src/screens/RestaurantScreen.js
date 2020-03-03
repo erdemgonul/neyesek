@@ -22,23 +22,24 @@ const RestaurantScreen = ({ navigation }) => {
 
     if (navigation.getParam('restaurant')) {
       setRestaurant(navigation.getParam('restaurant'));
-
-      setLocationAndMarkerLocation(navigation.getParam('restaurant').geometry.location);
+      setLocationAndMarkerLocation(navigation.getParam('restaurant').location);
     }
   }, [navigation.getParam('restaurant')]);
   useEffect(() => {
+    console.log(restaurant);
+
   }, [restaurant]);
   useEffect(() => {
     setLoaded(true);
   }, [location]);
   function setLocationAndMarkerLocation(latlng) {
     setMarkerLocation({
-      latitude: latlng.lat,
-      longitude: latlng.lng,
+      latitude: latlng.latitude,
+      longitude: latlng.longitude,
     });
     setLocation({
-      latitude: latlng.lat,
-      longitude: latlng.lng,
+      latitude: latlng.latitude,
+      longitude: latlng.longitude,
       latitudeDelta: LATITUD_DELTA,
       longitudeDelta: LONGITUDE_DELTA,
     });
