@@ -7,7 +7,7 @@ import Slider from "@brlja/react-native-slider";
 import { AntDesign } from '@expo/vector-icons';
 
 const HomeScreen = ({ route, navigation }) => {
-
+  const apiKey='AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   const window = Dimensions.get('window');
   const { width, height } = window;
   let LATITUD_DELTA = 0.009;
@@ -17,6 +17,7 @@ const HomeScreen = ({ route, navigation }) => {
   let [isLoaded, setLoaded] = useState(false);
   let [areaRadius, setAreaRadius] = useState(250);
   let [restaurants, setRestaurants] = useState(null);
+  let [visibleRestaurants, setVisibleRestaurants] = useState([]);
 
   let mapRef = null;
 
@@ -40,10 +41,11 @@ const HomeScreen = ({ route, navigation }) => {
   useEffect(() => {
     findNearbyRestaurants();
   }, [location]);
-  //if area radius changes
-  useEffect(() => {
-    fitZoomArea(areaRadius);
-  }, [areaRadius]);
+   //if location changes
+   useEffect(() => {
+     if(restaurants)
+    filterNearbyRestaurants();
+  }, [restaurants]);
   //if new location selected
   useEffect(() => {
 
@@ -56,22 +58,29 @@ const HomeScreen = ({ route, navigation }) => {
   }, [navigation.getParam('data')]);
 
   async function findNearbyRestaurants() {
-
     try {
       if (location) {
         let response = await fetch('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location='
-          + location.latitude + ',' + location.longitude + '&radius=' + areaRadius + '&type=restaurant&key=AIzaSyBEdjggEtqRTaBc2GNmBNm62t6bv9Q1bKU&opennow');
+          + location.latitude + ',' + location.longitude + '&radius=2000'  + '&type=restaurant&key=' + apiKey);
         let responseJson = await response.json();
-
-        if (!responseJson.error_message) {
+        if (!responseJson.error_message)
           setRestaurants(responseJson.results);
-
-        }
-      } else {
+        
       }
     } catch (error) {
       console.error(error);
     }
+  }
+
+  function filterNearbyRestaurants() {
+    let restaurantArray=[];
+          restaurants.forEach(restaurant => {
+            if(measure(restaurant.geometry.location.lat,restaurant.geometry.location.lng,location.latitude,
+              location.longitude)<=areaRadius){
+                restaurantArray.push(restaurant);
+            }
+          });
+          setVisibleRestaurants(restaurantArray);
   }
   function fitZoomArea(value) {
     if (value % 250 == 0) { // DÜZELTMEYİ UNUTMA
@@ -83,7 +92,7 @@ const HomeScreen = ({ route, navigation }) => {
         mapRef.fitToCoordinates(points, {
           animated: true
         })
-        findNearbyRestaurants();
+        filterNearbyRestaurants();
       }
     }
   }
@@ -165,8 +174,8 @@ const HomeScreen = ({ route, navigation }) => {
               <Text style={{ fontSize: 18, }}>Açık Restaurantlar</Text>
             </View>
             <FlatList style={{ marginBottom: 10 }}
-              data={restaurants}
-              extraData={restaurants}
+              data={visibleRestaurants}
+              extraData={visibleRestaurants}
               renderItem={({ item }) => (
                 <View style={styles.restaurantView}>
                   <TouchableOpacity style={{flexDirection:"row",justifyContent:"space-between" }}
@@ -233,6 +242,17 @@ const HomeScreen = ({ route, navigation }) => {
     } //right
     ]
   }
+}
+function measure(lat1, lon1, lat2, lon2){  // generally used geo measurement function
+  var R = 6378.137; // Radius of earth in KM
+  var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
+  var dLon = lon2 * Math.PI / 180 - lon1 * Math.PI / 180;
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+  Math.sin(dLon/2) * Math.sin(dLon/2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  var d = R * c;
+  return d * 1000; // meters
 }
 HomeScreen.navigationOptions = ({ navigation, route }) => {
   return {
