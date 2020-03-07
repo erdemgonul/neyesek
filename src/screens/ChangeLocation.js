@@ -3,6 +3,7 @@ import { Platform, Text, View, StyleSheet, TouchableOpacity, FlatList } from 're
 import Constants from 'expo-constants';
 import SearchBar from '../components/SearchBar';
 import { MaterialIcons } from '@expo/vector-icons';
+import Slider from "@brlja/react-native-slider";
 
 const ChangeLocation = ({ navigation }) => {
 
@@ -56,7 +57,16 @@ const ChangeLocation = ({ navigation }) => {
 
     <View style={styles.container}>
       <View style={{ marginHorizontal: 10 }}>
-        <SearchBar onChangeSearchText={newText => autoComplete(newText)} />
+       
+        
+    
+
+        <View style={{backgroundColor:'#ffffff',borderRadius:10,
+      paddingHorizontal:15,marginTop:20}}>
+        <SearchBar onChangeSearchText={newText => autoComplete(newText)}  />
+        </View>
+        <View style={{backgroundColor:'#ffffff',borderRadius:10,
+      paddingHorizontal:15,marginTop:20}}>
         <FlatList
           data={autoCompletePlaces}
           extraData={autoCompletePlaces}
@@ -75,7 +85,7 @@ const ChangeLocation = ({ navigation }) => {
 
           )}
         />
-
+       </View>
 
       </View>
       
@@ -93,7 +103,7 @@ ChangeLocation.navigationOptions = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
+    backgroundColor: "#F1F0F1"
   },
   map: {
 

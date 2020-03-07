@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView, LayoutAnimation, Platform, UIManager, } from 'react-native';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from "@brlja/react-native-slider";
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
-
+import Modal from "react-native-modal";
 const HomeScreen = ({ route, navigation }) => {
   const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   const url = 'https://neyesekback.herokuapp.com';
@@ -16,12 +16,16 @@ const HomeScreen = ({ route, navigation }) => {
   let [location, setLocation] = useState(null);
   let [markerLocation, setMarkerLocation] = useState(null);
   let [isLoaded, setLoaded] = useState(false);
+  let [expanded, setExpanded] = useState(false);
+
   let [areaRadius, setAreaRadius] = useState(250);
   let [restaurants, setRestaurants] = useState(null);
   let [visibleRestaurants, setVisibleRestaurants] = useState([]);
 
   let mapRef = null;
-
+  if (Platform.OS === 'android') {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
   function setLocationAndMarkerLocation(latlng) {
     setMarkerLocation({
       latitude: latlng.lat,
@@ -33,6 +37,12 @@ const HomeScreen = ({ route, navigation }) => {
       latitudeDelta: LATITUD_DELTA,
       longitudeDelta: LONGITUDE_DELTA,
     });
+  }
+
+
+  function changeLayout() {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(!expanded);
   }
   //first screen loaded
   useEffect(() => {
@@ -160,16 +170,85 @@ const HomeScreen = ({ route, navigation }) => {
         <View style={{ flex: 1 }}>
 
           <View>
-            <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation')}} style={styles.location}>
-              <View style={{flexDirection:"row"}}>
-                <MaterialIcons name="location-on" size={35} style={styles.locationIcon} />
-                <View>
-                  <Text style={styles.currentLocationText}>Anlık Konumum</Text>
-                  <Text style={styles.currentMeterText}>200 metre çevresindeki restaurantlar</Text>
+            <TouchableOpacity onPress={() => { changeLayout() }} >
+              <View style={{
+                borderRadius: 40,
+                paddingHorizontal: 10,
+                backgroundColor: '#ffffff',
+                paddingVertical: 5,
+                marginHorizontal: 5,
+                marginVertical: 5,
+                
+              }}>
+
+                <View style={{borderBottomWidth: expanded ? 1 : 0, borderColor:'#EBEBEB', paddingBottom:  expanded ? 10 : 0,
+                  marginBottom: expanded ? 10 : 0,}}>
+
+                <View style={{ 
+                   flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems:"center",
+                  paddingBottom:  expanded ? 10 : 0,
+                  marginBottom: expanded ? 10 : 0,
+                  }}>
+
+                  <View style={{ flexDirection: "row", }}>
+                    <MaterialIcons name="location-on" size={35} style={styles.locationIcon} />
+                    <View>
+                      <Text style={styles.currentLocationText}>Anlık Konumum</Text>
+                      <Text style={styles.currentMeterText}>200 metre çevresindeki restaurantlar</Text>
+                    </View>
+                  </View>
+                  <MaterialIcons name="keyboard-arrow-right" size={35} style={styles.rightArrowIcon} />
+                   
                 </View>
+                <View style={{
+                  height: expanded ? null : 0, overflow: 'hidden',      
+                  paddingHorizontal: 10,
+                  backgroundColor: '#ffffff',
+                  marginHorizontal: 5,
+                 
+                }}>
+                
+                <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }}
+                 style={{backgroundColor: '#FF7478', paddingVertical: 5 ,borderRadius:20}}>
+                  <Text style={styles.buttonTextStyle}>Konumunu Değiştir</Text>
+                </TouchableOpacity>
+                  
+                </View>
+                </View>
+               
+                
+                <View style={{
+                  height: expanded ? null : 0, overflow: 'hidden',      
+                  paddingHorizontal: 10,
+                  backgroundColor: '#ffffff',
+                  marginHorizontal: 5,
+                 
+                }}>
+                
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginHorizontal: 5 }}>
+                    <Text style={{ fontSize: 14 }}>Mesafeyi Ayarlayın</Text>
+                    <Text style={{fontSize:14}}>{250} METRE</Text>
+                  </View>
+                  <Slider
+                    onValueChange={value => fitZoomArea(value)}
+                    minimumValue={250}
+                    maximumValue={2000}
+                    value={250}
+                    step={250}
+                    thumbTintColor={'#FF7478'}
+                    trackStyle={{ backgroundColor: '#EBEBEB' }}
+                    minimumTrackTintColor={'#dbdbdb'}
+                  />
+                </View>
+                
               </View>
-              <MaterialIcons name="keyboard-arrow-right" size={35} style={styles.rightArrowIcon} />
+
+
+
             </TouchableOpacity>
+
           </View>
 
           <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
@@ -179,8 +258,7 @@ const HomeScreen = ({ route, navigation }) => {
           </MapView>
 
           <View style={styles.mainView}>
-
-            <View style={{ paddingVertical: 10, marginBottom: 15, paddingHorizontal: 10 }}>
+            <View style={{ paddingVertical: 10, marginBottom: 10, paddingHorizontal: 10 }}>
               <Text style={{ fontSize: 18, }}>Açık Restaurantlar</Text>
             </View>
             <FlatList style={{ marginBottom: 10, paddingHorizontal: 10 }}
@@ -191,37 +269,24 @@ const HomeScreen = ({ route, navigation }) => {
                   <TouchableOpacity style={{ flexDirection: "row", justifyContent: "space-between" }}
                     onPress={() => { getPlaceDetails(item.place_id) }}>
                     <Text style={styles.restaurantNames}>{item.name}</Text>
-                    <View style={{
-                      alignSelf: "flex-end",
-                      flexDirection: "row", backgroundColor: '#9cafff',
-                      borderRadius: 20, width: 70
-                    }}>
-                      <AntDesign name="star" size={15}
-                        style={{
-                          color: 'white', marginLeft: 10, alignSelf: "center",
-                        }} />
-                      <Text style={{
-                        fontSize: 12, paddingLeft: 10, paddingVertical: 5, color: 'white',
-                        fontWeight: "bold"
-                      }}>{item.rating}</Text>
-
+                    <View style={styles.ratingView}>
+                      <AntDesign name="star" size={15} style={styles.starIcon} />
+                      <Text style={styles.ratingText}>{item.rating}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
-
               )}
-
             />
-
 
           </View>
 
-
         </View>}
-        
+
+      <View>
+
+      </View>
+
     </SafeAreaView>
-
-
   );
 
   function get4PointsAroundCircumference(latitude, longitude, radius) {
@@ -271,15 +336,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F1F0F1"
   },
-  location:{
+  location: {
     flexDirection: "row",
-    borderRadius: 40,
-    paddingHorizontal: 10,
-    backgroundColor:'#ffffff',
-    paddingVertical:5,
-    marginHorizontal:5,
-    marginVertical:5,
-    justifyContent:"space-between"
+    justifyContent: "space-between",
+    alignItems:"center",
   },
   map: {
     flex: 1 / 2,//height 300 def
@@ -290,16 +350,16 @@ const styles = StyleSheet.create({
   },
   buttonTextStyle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 14,
     textAlign: "center",
-    paddingVertical: 10
+    paddingVertical: 5
   },
-  mainView:{
+  mainView: {
     marginHorizontal: 5,
     flex: 1,
     backgroundColor: '#FCFCFC',
     marginTop: 10,
-    marginBottom:20,
+    marginBottom: 20,
     borderRadius: 15
   },
   restaurantView: {
@@ -312,25 +372,41 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     marginHorizontal: 10,
   },
-  locationIcon:{
+  locationIcon: {
     alignSelf: "center",
     marginLeft: 5,
-    color:'black'
+    color: 'black'
   },
-  rightArrowIcon:{
+  rightArrowIcon: {
     alignSelf: "center",
-    color:'black'
+    color: 'black'
   },
-  currentLocationText:{
+  starIcon: {
+    color: 'white',
+    marginLeft: 10,
+    alignSelf: "center",
+  },
+  currentLocationText: {
     fontSize: 14,
-    fontWeight:'bold',
+    fontWeight: 'bold',
     marginLeft: 10,
     color: '#272727',
   },
-  currentMeterText:{
+  currentMeterText: {
     fontSize: 12,
     marginLeft: 10,
     color: '#272727',
+  },
+  ratingView: {
+    alignSelf: "flex-end",
+    flexDirection: "row",
+    backgroundColor: '#9cafff',
+    borderRadius: 20,
+    width: 70
+  },
+  ratingText: {
+    fontSize: 12, paddingLeft: 10, paddingVertical: 5, color: 'white',
+    fontWeight: "bold"
   }
 });
 

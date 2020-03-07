@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
         height: 40,
         marginTop: 5,
         marginBottom: 5,
-        borderRadius: 10
+        borderRadius: 10,
     },
     iconStyle: {
         alignSelf: "center",
