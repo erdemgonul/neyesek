@@ -126,8 +126,6 @@ const HomeScreen = ({ route, navigation }) => {
     }
   }
 
-
-
   async function getLocationAsync() {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
@@ -162,72 +160,25 @@ const HomeScreen = ({ route, navigation }) => {
         <View style={{ flex: 1 }}>
 
           <View>
-            <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }} style={{
-               flexDirection: "row",
-               borderRadius: 40,
-               paddingHorizontal: 10,
-               backgroundColor:'#ffffff',
-               paddingVertical:5,
-               marginHorizontal:5,
-               marginVertical:5,
-               justifyContent:"space-between"
-            }} >
-
-            <View style={{flexDirection:"row"}}>
-            <MaterialIcons name="location-on" size={35} style={{
-              alignSelf: "center",
-              marginLeft: 5,
-              color:'black'
-            }} />
-              <View>
-              <Text style={{
-                fontSize: 14,
-                fontWeight:'bold',
-                marginLeft: 10,
-                color: '#272727',
-                
-              }}>Anlık Konumum</Text>
-
-              <Text style={{
-                fontSize: 12,
-                
-                marginLeft: 10,
-                color: '#272727',
-                
-              }}>200 metre çevresindeki restaurantlar</Text>
-
+            <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation')}} style={styles.location}>
+              <View style={{flexDirection:"row"}}>
+                <MaterialIcons name="location-on" size={35} style={styles.locationIcon} />
+                <View>
+                  <Text style={styles.currentLocationText}>Anlık Konumum</Text>
+                  <Text style={styles.currentMeterText}>200 metre çevresindeki restaurantlar</Text>
+                </View>
               </View>
-            </View>
-            
-            
-            <MaterialIcons name="keyboard-arrow-right" size={35} style={{
-              alignSelf: "center",
-              marginLeft: 5,
-              color:'black'
-            }} />
-
-
+              <MaterialIcons name="keyboard-arrow-right" size={35} style={styles.rightArrowIcon} />
             </TouchableOpacity>
-           
           </View>
+
           <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
-
-            <Marker
-              coordinate={markerLocation}
-              title={'deneme'}
-            ></Marker>
-            <Circle
-              center={markerLocation}
-              radius={areaRadius}
-              fillColor="rgba(20, 0, 0, 0.1)"
-              strokeColor="rgba(0,0,0,0.1)"
-              zIndex={2}
-
-            />
+            <Marker coordinate={markerLocation}></Marker>
+            <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(20, 0, 0, 0.1)"
+              strokeColor="rgba(0,0,0,0.1)" zIndex={2} />
           </MapView>
 
-
-          <View style={{ marginHorizontal: 5, flex: 1, backgroundColor: '#FCFCFC', marginTop: 10,marginBottom:20, borderRadius: 15 }}>
+          <View style={styles.mainView}>
 
             <View style={{ paddingVertical: 10, marginBottom: 15, paddingHorizontal: 10 }}>
               <Text style={{ fontSize: 18, }}>Açık Restaurantlar</Text>
@@ -312,9 +263,6 @@ function measure(lat1, lon1, lat2, lon2) {  // generally used geo measurement fu
 }
 HomeScreen.navigationOptions = ({ navigation, route }) => {
   return {
-
-
-
   }
 };
 
@@ -322,6 +270,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F1F0F1"
+  },
+  location:{
+    flexDirection: "row",
+    borderRadius: 40,
+    paddingHorizontal: 10,
+    backgroundColor:'#ffffff',
+    paddingVertical:5,
+    marginHorizontal:5,
+    marginVertical:5,
+    justifyContent:"space-between"
   },
   map: {
     flex: 1 / 2,//height 300 def
@@ -336,6 +294,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingVertical: 10
   },
+  mainView:{
+    marginHorizontal: 5,
+    flex: 1,
+    backgroundColor: '#FCFCFC',
+    marginTop: 10,
+    marginBottom:20,
+    borderRadius: 15
+  },
   restaurantView: {
     paddingVertical: 8,
     borderTopWidth: 1,
@@ -345,6 +311,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginVertical: 5,
     marginHorizontal: 10,
+  },
+  locationIcon:{
+    alignSelf: "center",
+    marginLeft: 5,
+    color:'black'
+  },
+  rightArrowIcon:{
+    alignSelf: "center",
+    color:'black'
+  },
+  currentLocationText:{
+    fontSize: 14,
+    fontWeight:'bold',
+    marginLeft: 10,
+    color: '#272727',
+  },
+  currentMeterText:{
+    fontSize: 12,
+    marginLeft: 10,
+    color: '#272727',
   }
 });
 
