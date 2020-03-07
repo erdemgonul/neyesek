@@ -78,6 +78,7 @@ const ChangeLocation = ({ navigation }) => {
 
 
       </View>
+      
     </View>
   );
 }

@@ -31,10 +31,10 @@ const navigator = createStackNavigator(
       headerTitleAlign: 'center',
       headerTitle:'neyesek',
       cardStyle: {
-        backgroundColor: '#FCFCFC'
+        backgroundColor: '#F1F0F1'
       },
       headerStyle: {
-        backgroundColor: '#FB4D6A',
+        backgroundColor: '#9bdeac',
       },
       headerTintColor: '#fff',
       headerTitleStyle: {
