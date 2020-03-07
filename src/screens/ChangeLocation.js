@@ -3,7 +3,6 @@ import { Platform, Text, View, StyleSheet, TouchableOpacity, FlatList } from 're
 import Constants from 'expo-constants';
 import SearchBar from '../components/SearchBar';
 import { MaterialIcons } from '@expo/vector-icons';
-import Slider from "@brlja/react-native-slider";
 
 const ChangeLocation = ({ navigation }) => {
 
@@ -18,55 +17,42 @@ const ChangeLocation = ({ navigation }) => {
     }
   }, []);
 
-
   async function autoComplete(input) {
     try {
       let response = await fetch("https://maps.googleapis.com/maps/api/place/autocomplete/json?components=country:tr&input="
         + input + "&types=geocode&key="+ apiKey);
       let responseJson = await response.json();
       setAutoCompletePlaces(responseJson.predictions);
-      console.log(responseJson);
-
     } catch (error) {
-      console.error(esrror);
+      console.error(error);
     }
   }
   async function changeLocation(location) {
     
-   
-  
     let locData;
     if(location==='mylocation'){
       locData={
         "geometry":"mylocation"
       }
-  
     }else{
       let response = await fetch("https://maps.googleapis.com/maps/api/place/details/json?place_id=" +
       location.place_id +"&fields=name,rating,formatted_phone_number,geometry&key="+apiKey);
       let responseJson = await response.json();
-     console.log(responseJson);
       locData=responseJson.result
     }
-    console.log("deneme");
-       navigation.navigate('Home', {
-        data:locData
-      });
+    navigation.navigate('Home', {
+    data:locData
+    });
   }
   return (
 
     <View style={styles.container}>
-      <View style={{ marginHorizontal: 10 }}>
-       
-        
-    
-
         <View style={{backgroundColor:'#ffffff',borderRadius:10,
-      paddingHorizontal:15,marginTop:20}}>
+      marginTop:0}}>
         <SearchBar onChangeSearchText={newText => autoComplete(newText)}  />
         </View>
         <View style={{backgroundColor:'#ffffff',borderRadius:10,
-      paddingHorizontal:15,marginTop:20}}>
+        paddingHorizontal:15,marginTop:20}}>
         <FlatList
           data={autoCompletePlaces}
           extraData={autoCompletePlaces}
@@ -82,22 +68,14 @@ const ChangeLocation = ({ navigation }) => {
                 <Text style={styles.locationsText}>{item.description}</Text>
               </TouchableOpacity>
             </View>
-
           )}
         />
        </View>
-
-      </View>
-      
     </View>
   );
 }
 ChangeLocation.navigationOptions = ({ navigation }) => {
-  return {
-
-
-
-  }
+  return {}
 };
 
 const styles = StyleSheet.create({
@@ -106,7 +84,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F0F1"
   },
   map: {
-
     height: 300
   },
   buttonStyle: {
@@ -136,16 +113,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#EBEBEB',
     flexDirection: "row",
-
-    justifyContent: "center"
-  },
+    marginHorizontal:10
+      },
   mylocationIcon: {
     paddingVertical: 10,
     color: '#DDDDDD'
   },
   mylocationText: {
     textAlignVertical: "center",
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     fontSize: 16,
     paddingVertical: 10,
 

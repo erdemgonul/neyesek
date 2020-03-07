@@ -4,8 +4,7 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from "@brlja/react-native-slider";
-import { AntDesign, MaterialIcons } from '@expo/vector-icons';
-import Modal from "react-native-modal";
+import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 const HomeScreen = ({ route, navigation }) => {
   const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   const url = 'https://neyesekback.herokuapp.com';
@@ -17,8 +16,9 @@ const HomeScreen = ({ route, navigation }) => {
   let [markerLocation, setMarkerLocation] = useState(null);
   let [isLoaded, setLoaded] = useState(false);
   let [expanded, setExpanded] = useState(false);
+  let [locationName, setLocationName] = useState('Mevcut Konum');
 
-  let [areaRadius, setAreaRadius] = useState(250);
+  let [areaRadius, setAreaRadius] = useState(1000);
   let [restaurants, setRestaurants] = useState(null);
   let [visibleRestaurants, setVisibleRestaurants] = useState([]);
 
@@ -61,10 +61,13 @@ const HomeScreen = ({ route, navigation }) => {
   useEffect(() => {
 
     if (navigation.getParam('data')) {
-      if (navigation.getParam('data').geometry === 'mylocation')
+      if (navigation.getParam('data').geometry === 'mylocation') {
         getLocationAsync();
-      else
+        setLocationName("Mevcut Konumum");
+      } else {
         setLocationAndMarkerLocation(navigation.getParam('data').geometry.location);
+        setLocationName(navigation.getParam('data').name);
+      }
     }
   }, [navigation.getParam('data')]);
 
@@ -155,11 +158,8 @@ const HomeScreen = ({ route, navigation }) => {
       longitude: x.coords.longitude,
     });
     findNearbyRestaurants();
-    fitZoomArea(250);
-
+    fitZoomArea(areaRadius);
     setLoaded(true);
-
-
   };
 
   return (
@@ -178,71 +178,73 @@ const HomeScreen = ({ route, navigation }) => {
                 paddingVertical: 5,
                 marginHorizontal: 5,
                 marginVertical: 5,
-                
+
               }}>
 
-                <View style={{borderBottomWidth: expanded ? 1 : 0, borderColor:'#EBEBEB', paddingBottom:  expanded ? 10 : 0,
-                  marginBottom: expanded ? 10 : 0,}}>
-
-                <View style={{ 
-                   flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems:"center",
-                  paddingBottom:  expanded ? 10 : 0,
+                <View style={{
+                  borderBottomWidth: expanded ? 1 : 0, borderColor: '#EBEBEB', paddingBottom: expanded ? 10 : 0,
                   marginBottom: expanded ? 10 : 0,
+                }}>
+
+                  <View style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingBottom: expanded ? 10 : 0,
+                    marginBottom: expanded ? 10 : 0,
                   }}>
 
-                  <View style={{ flexDirection: "row", }}>
-                    <MaterialIcons name="location-on" size={35} style={styles.locationIcon} />
-                    <View>
-                      <Text style={styles.currentLocationText}>Anlık Konumum</Text>
-                      <Text style={styles.currentMeterText}>200 metre çevresindeki restaurantlar</Text>
+                    <View style={{ flexDirection: "row", }}>
+                      <MaterialIcons name="location-on" size={35} style={styles.locationIcon} />
+                      <View>
+                        <Text style={styles.currentLocationText}>{locationName.substring(0, 40)}{locationName.length > 40 ? "..." : ""}</Text>
+                        <Text style={styles.currentMeterText}>{areaRadius} metre çevresindeki restaurantlar</Text>
+                      </View>
                     </View>
+                    <MaterialIcons name="keyboard-arrow-right" size={35} style={styles.rightArrowIcon} />
+
                   </View>
-                  <MaterialIcons name="keyboard-arrow-right" size={35} style={styles.rightArrowIcon} />
-                   
+                  <View style={{
+                    height: expanded ? null : 0, overflow: 'hidden',
+                    paddingHorizontal: 10,
+                    backgroundColor: '#ffffff',
+                    marginHorizontal: 5,
+
+                  }}>
+
+                    <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }}
+                      style={{ backgroundColor: '#9bdeac', paddingVertical: 5, borderRadius: 20 }}>
+                      <Text style={styles.buttonTextStyle}>Konumunu Değiştir</Text>
+                    </TouchableOpacity>
+
+                  </View>
                 </View>
+
+
                 <View style={{
-                  height: expanded ? null : 0, overflow: 'hidden',      
+                  height: expanded ? null : 0, overflow: 'hidden',
                   paddingHorizontal: 10,
                   backgroundColor: '#ffffff',
                   marginHorizontal: 5,
-                 
+
                 }}>
-                
-                <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }}
-                 style={{backgroundColor: '#FF7478', paddingVertical: 5 ,borderRadius:20}}>
-                  <Text style={styles.buttonTextStyle}>Konumunu Değiştir</Text>
-                </TouchableOpacity>
-                  
-                </View>
-                </View>
-               
-                
-                <View style={{
-                  height: expanded ? null : 0, overflow: 'hidden',      
-                  paddingHorizontal: 10,
-                  backgroundColor: '#ffffff',
-                  marginHorizontal: 5,
-                 
-                }}>
-                
+
                   <View style={{ flexDirection: "row", justifyContent: "space-between", marginHorizontal: 5 }}>
                     <Text style={{ fontSize: 14 }}>Mesafeyi Ayarlayın</Text>
-                    <Text style={{fontSize:14}}>{250} METRE</Text>
+                    <Text style={{ fontSize: 14 }}>{areaRadius} METRE</Text>
                   </View>
                   <Slider
                     onValueChange={value => fitZoomArea(value)}
                     minimumValue={250}
                     maximumValue={2000}
-                    value={250}
+                    value={areaRadius}
                     step={250}
                     thumbTintColor={'#FF7478'}
                     trackStyle={{ backgroundColor: '#EBEBEB' }}
                     minimumTrackTintColor={'#dbdbdb'}
                   />
                 </View>
-                
+
               </View>
 
 
@@ -258,8 +260,10 @@ const HomeScreen = ({ route, navigation }) => {
           </MapView>
 
           <View style={styles.mainView}>
-            <View style={{ paddingVertical: 10, marginBottom: 10, paddingHorizontal: 10 }}>
-              <Text style={{ fontSize: 18, }}>Açık Restaurantlar</Text>
+            <View style={styles.filterView}>
+              <Text style={{ fontSize: 18, textAlignVertical: "center" }}>Açık Restaurantlar</Text>
+              <FontAwesome name="filter" size={30} style={styles.filterIcon} />
+
             </View>
             <FlatList style={{ marginBottom: 10, paddingHorizontal: 10 }}
               data={visibleRestaurants}
@@ -339,7 +343,7 @@ const styles = StyleSheet.create({
   location: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems:"center",
+    alignItems: "center",
   },
   map: {
     flex: 1 / 2,//height 300 def
@@ -362,9 +366,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 15
   },
+  filterView: {
+    paddingVertical: 10, marginHorizontal: 10, paddingHorizontal: 10, flexDirection: "row", justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderColor: '#EBEBEB'
+  },
   restaurantView: {
     paddingVertical: 8,
-    borderTopWidth: 1,
+    borderBottomWidth: 1,
     borderColor: '#EBEBEB',
   },
   restaurantNames: {
@@ -381,6 +390,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     color: 'black'
   },
+  filterIcon: {
+    alignSelf: "center",
+    color: '#3a3a3a',
+  },
   starIcon: {
     color: 'white',
     marginLeft: 10,
@@ -391,6 +404,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
     color: '#272727',
+
   },
   currentMeterText: {
     fontSize: 12,
