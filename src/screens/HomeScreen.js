@@ -74,6 +74,39 @@ const HomeScreen = ({ route, navigation }) => {
   async function findNearbyRestaurants() {
     try {
       if (location) {
+
+        if(true){
+          
+          let response = await fetch(url + '/api/getNearbyRestaurants', {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+             location:location,
+             areaRadius:areaRadius
+            }),
+          });
+          console.log("debene");
+          let responseJson = await response.json();
+          let arr=[];
+          for (let i = 0; i < responseJson.length; i++) {
+            const element = responseJson[i];
+            console.log(responseJson[i]);
+            let obj=responseJson[i];
+            obj.geometry={"location":null};
+            obj.geometry.location={"lat":0,"lng":0};
+            obj.geometry.location.lat=responseJson[i].location.coordinates[1];
+            obj.geometry.location.lng=responseJson[i].location.coordinates[0];
+            arr.push(obj);
+          }
+          setRestaurants(arr);
+
+          console.log(responseJson);
+        }
+
+        /*
         let response = await fetch('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location='
           + location.latitude + ',' + location.longitude + '&radius=2000' + '&type=restaurant&key=' + apiKey);
         let responseJson = await response.json();
@@ -90,6 +123,7 @@ const HomeScreen = ({ route, navigation }) => {
             restaurants: responseJson.results
           }),
         });
+        */
       }
     } catch (error) {
       console.error(error);
@@ -108,8 +142,14 @@ const HomeScreen = ({ route, navigation }) => {
         }),
       });
       let responseJson = await response.json();
+      console.log(place_id);
+      let obj=responseJson;
+      obj.geometry={"location":null};
+      obj.geometry.location={"lat":0,"lng":0};
+      obj.geometry.location.lat=responseJson.location.coordinates[1];
+      obj.geometry.location.lng=responseJson.location.coordinates[0];
       navigation.navigate('RestaurantScreen',
-        { restaurant: responseJson })
+        { restaurant: obj })
     } catch (error) {
       console.error(error);
     }
@@ -268,6 +308,7 @@ const HomeScreen = ({ route, navigation }) => {
             <FlatList style={{ marginBottom: 10, paddingHorizontal: 10 }}
               data={visibleRestaurants}
               extraData={visibleRestaurants}
+              keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
                 <View style={styles.restaurantView}>
                   <TouchableOpacity style={{ flexDirection: "row", justifyContent: "space-between" }}
