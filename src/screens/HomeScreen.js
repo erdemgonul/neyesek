@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from "@brlja/react-native-slider";
+import LottieView from "lottie-react-native";
 import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 const HomeScreen = ({ route, navigation }) => {
   const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
@@ -20,9 +21,11 @@ const HomeScreen = ({ route, navigation }) => {
 
   let [areaRadius, setAreaRadius] = useState(1000);
   let [restaurants, setRestaurants] = useState(null);
-  let [visibleRestaurants, setVisibleRestaurants] = useState([]);
+  let [visibleRestaurants, setVisibleRestaurants] = useState(null);
 
   let mapRef = null;
+  let animationRef = null;
+
   if (Platform.OS === 'android') {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
@@ -41,21 +44,44 @@ const HomeScreen = ({ route, navigation }) => {
 
 
   function changeLayout() {
+ 
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(!expanded);
   }
   //first screen loaded
   useEffect(() => {
+    if(animationRef!=null){
+
+      animationRef.play();
+    }
     getLocationAsync();
   }, []);
   //if location changes
   useEffect(() => {
     findNearbyRestaurants();
   }, [location]);
+ 
+  useEffect(() => {
+    if (visibleRestaurants && visibleRestaurants.length>0) {
+      navigation.setParams({
+        isLoading: false,
+      });
+
+      setLoaded(true);
+      
+      console.log("İŞTE BURASI");
+      visibleRestaurants.forEach(element => {
+        console.log("EE");
+      });
+    }
+  }, [visibleRestaurants]);
   //if location changes
   useEffect(() => {
-    if (restaurants)
+    if (restaurants) {
       filterNearbyRestaurants();
+
+      console.log("DENEME");
+    }
   }, [restaurants]);
   //if new location selected
   useEffect(() => {
@@ -75,8 +101,8 @@ const HomeScreen = ({ route, navigation }) => {
     try {
       if (location) {
 
-        if(true){
-          
+        if (true) {
+
           let response = await fetch(url + '/api/getNearbyRestaurants', {
             method: 'POST',
             headers: {
@@ -84,46 +110,25 @@ const HomeScreen = ({ route, navigation }) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-             location:location,
-             areaRadius:areaRadius
+              location: location,
+              areaRadius: areaRadius
             }),
           });
-          console.log("debene");
           let responseJson = await response.json();
-          let arr=[];
+          let arr = [];
           for (let i = 0; i < responseJson.length; i++) {
             const element = responseJson[i];
-            console.log(responseJson[i]);
-            let obj=responseJson[i];
-            obj.geometry={"location":null};
-            obj.geometry.location={"lat":0,"lng":0};
-            obj.geometry.location.lat=responseJson[i].location.coordinates[1];
-            obj.geometry.location.lng=responseJson[i].location.coordinates[0];
+            let obj = responseJson[i];
+            obj.geometry = { "location": null };
+            obj.geometry.location = { "lat": 0, "lng": 0 };
+            obj.geometry.location.lat = responseJson[i].location.coordinates[1];
+            obj.geometry.location.lng = responseJson[i].location.coordinates[0];
             arr.push(obj);
+
           }
+
           setRestaurants(arr);
-
-          console.log(responseJson);
         }
-
-        /*
-        let response = await fetch('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location='
-          + location.latitude + ',' + location.longitude + '&radius=2000' + '&type=restaurant&key=' + apiKey);
-        let responseJson = await response.json();
-        if (!responseJson.error_message)
-          setRestaurants(responseJson.results);
-
-        fetch(url + '/api/addRestaurants', {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            restaurants: responseJson.results
-          }),
-        });
-        */
       }
     } catch (error) {
       console.error(error);
@@ -142,12 +147,11 @@ const HomeScreen = ({ route, navigation }) => {
         }),
       });
       let responseJson = await response.json();
-      console.log(place_id);
-      let obj=responseJson;
-      obj.geometry={"location":null};
-      obj.geometry.location={"lat":0,"lng":0};
-      obj.geometry.location.lat=responseJson.location.coordinates[1];
-      obj.geometry.location.lng=responseJson.location.coordinates[0];
+      let obj = responseJson;
+      obj.geometry = { "location": null };
+      obj.geometry.location = { "lat": 0, "lng": 0 };
+      obj.geometry.location.lat = responseJson.location.coordinates[1];
+      obj.geometry.location.lng = responseJson.location.coordinates[0];
       navigation.navigate('RestaurantScreen',
         { restaurant: obj })
     } catch (error) {
@@ -157,11 +161,19 @@ const HomeScreen = ({ route, navigation }) => {
   function filterNearbyRestaurants() {
     let restaurantArray = [];
     restaurants.forEach(restaurant => {
-      if (measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng, location.latitude,
+      console.log(restaurant.geometry.location);
+      console.log(location);
+      console.log(
+        measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
+          location.latitude,
+          location.longitude));
+      if (measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
+        location.latitude,
         location.longitude) <= areaRadius) {
         restaurantArray.push(restaurant);
       }
     });
+
     setVisibleRestaurants(restaurantArray);
   }
   function fitZoomArea(value) {
@@ -199,13 +211,12 @@ const HomeScreen = ({ route, navigation }) => {
     });
     findNearbyRestaurants();
     fitZoomArea(areaRadius);
-    setLoaded(true);
   };
 
   return (
 
     <SafeAreaView style={styles.container}>
-
+      
       {isLoaded &&
         <View style={{ flex: 1 }}>
 
@@ -327,10 +338,20 @@ const HomeScreen = ({ route, navigation }) => {
 
         </View>}
 
-      <View>
-
-      </View>
-
+        {!isLoaded && 
+        <View style={styles.animationContainer}>
+        <LottieView
+        ref={(ref) => animationRef = ref}
+          style={{
+            flex:1,
+            
+            backgroundColor: '#fff',
+          }}
+          source={require('../assets/location.json')}
+        />
+        <Text style={{marginTop:200,fontSize:16}}>Etrafındaki Açık Restaurantlar Aranıyor</Text>
+        </View>
+      }
     </SafeAreaView>
   );
 
@@ -372,11 +393,23 @@ function measure(lat1, lon1, lat2, lon2) {  // generally used geo measurement fu
   return d * 1000; // meters
 }
 HomeScreen.navigationOptions = ({ navigation, route }) => {
-  return {
+  if (navigation.state.params && navigation.state.params.isLoading==false) {
+    //Hide Header by returning null
+    return { headerShown: true };
+  } else {
+    //Show Header by returning header
+    return { headerShown: false };
   }
+       
 };
 
 const styles = StyleSheet.create({
+  animationContainer: {
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: "#F1F0F1"

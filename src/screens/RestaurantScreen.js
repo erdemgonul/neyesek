@@ -22,7 +22,7 @@ const RestaurantScreen = ({ navigation }) => {
 
     if (navigation.getParam('restaurant')) {
       setRestaurant(navigation.getParam('restaurant'));
-      setLocationAndMarkerLocation(navigation.getParam('restaurant').location);
+      setLocationAndMarkerLocation(navigation.getParam('restaurant').geometry.location);
     }
   }, [navigation.getParam('restaurant')]);
   useEffect(() => {
@@ -32,12 +32,12 @@ const RestaurantScreen = ({ navigation }) => {
   }, [location]);
   function setLocationAndMarkerLocation(latlng) {
     setMarkerLocation({
-      latitude: latlng.latitude,
-      longitude: latlng.longitude,
+      latitude: latlng.lat,
+      longitude: latlng.lng,
     });
     setLocation({
-      latitude: latlng.latitude,
-      longitude: latlng.longitude,
+      latitude: latlng.lat,
+      longitude: latlng.lng,
       latitudeDelta: LATITUD_DELTA,
       longitudeDelta: LONGITUDE_DELTA,
     });
@@ -65,7 +65,7 @@ const RestaurantScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.addressView}>
-            <Text style={{ fontSize: 14 }}>Adres : {restaurant.vicinity}</Text>
+            <Text style={{ fontSize: 14 }}>Adres : {restaurant.formatted_address}</Text>
           </View>
 
           <View style={styles.phoneView}>
