@@ -8,7 +8,7 @@ import LottieView from "lottie-react-native";
 import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 const HomeScreen = ({ route, navigation }) => {
   const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
-  const url = 'https://neyesekback.herokuapp.com';
+  const url = 'http://192.168.1.193:3000';
   const window = Dimensions.get('window');
   const { width, height } = window;
   let LATITUD_DELTA = 0.009;
@@ -62,6 +62,7 @@ const HomeScreen = ({ route, navigation }) => {
   }, [location]);
  
   useEffect(() => {
+    
     if (visibleRestaurants && visibleRestaurants.length>0) {
       navigation.setParams({
         isLoading: false,
@@ -69,18 +70,16 @@ const HomeScreen = ({ route, navigation }) => {
 
       setLoaded(true);
       
-      console.log("İŞTE BURASI");
-      visibleRestaurants.forEach(element => {
-        console.log("EE");
-      });
+      console.log("trueyum");
+    }else{
+      console.log("hasiktir");
     }
   }, [visibleRestaurants]);
   //if location changes
   useEffect(() => {
-    if (restaurants) {
+    if (restaurants && restaurants.length>0) {
+      console.log("filter");
       filterNearbyRestaurants();
-
-      console.log("DENEME");
     }
   }, [restaurants]);
   //if new location selected
@@ -126,7 +125,7 @@ const HomeScreen = ({ route, navigation }) => {
             arr.push(obj);
 
           }
-
+          console.log("restoranlar geldi");
           setRestaurants(arr);
         }
       }
@@ -209,7 +208,6 @@ const HomeScreen = ({ route, navigation }) => {
       latitude: x.coords.latitude,
       longitude: x.coords.longitude,
     });
-    findNearbyRestaurants();
     fitZoomArea(areaRadius);
   };
 
@@ -338,7 +336,7 @@ const HomeScreen = ({ route, navigation }) => {
 
         </View>}
 
-        {!isLoaded && 
+        {isLoaded==false && 
         <View style={styles.animationContainer}>
         <LottieView
         ref={(ref) => animationRef = ref}
