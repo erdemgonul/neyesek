@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView, LayoutAnimation, Platform, UIManager, } from 'react-native';
+import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView, LayoutAnimation, Platform, UIManager } from 'react-native';
+import Modal from 'react-native-modal';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from "@brlja/react-native-slider";
 import LottieView from "lottie-react-native";
 import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
-const HomeScreen = ({  navigation }) => {
+const HomeScreen = ({ navigation }) => {
   const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   const url = 'http://192.168.1.193:3000';
   const window = Dimensions.get('window');
@@ -18,16 +19,36 @@ const HomeScreen = ({  navigation }) => {
   let [isLoaded, setLoaded] = useState(false);
   let [expanded, setExpanded] = useState(false);
   let [locationName, setLocationName] = useState('Mevcut Konum');
-
+  let [modalVisible, setModalVisible] = useState(false);
   let [areaRadius, setAreaRadius] = useState(1000);
   let [restaurants, setRestaurants] = useState(null);
   let [visibleRestaurants, setVisibleRestaurants] = useState(null);
+  let [sortMethod, setSortMethod] = useState(false); // false means rating, true means distance
 
   let mapRef = null;
   let animationRef = null;
 
   if (Platform.OS === 'android') {
     UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+
+  function sortRestaurants(isFirstLoad) {
+    if (!isFirstLoad)
+      setModalVisible(!modalVisible);
+    let unsortedRestaurants = visibleRestaurants;
+    if (sortMethod) {
+      // sort by rating
+      unsortedRestaurants.sort(function (a, b) {
+        return +(a.distance > b.distance) || -(a.distance < b.distance);
+      });
+    } else {
+      // sort by distance
+      unsortedRestaurants.sort(function (a, b) {
+        return (a.rating === null || a.rating === undefined) - (b.rating === null || b.rating === undefined)
+          || -(a.rating > b.rating) || +(a.rating < b.rating);
+      });
+    }
+    setVisibleRestaurants(unsortedRestaurants);
   }
   function setLocationAndMarkerLocation(latlng) {
     setMarkerLocation({
@@ -44,13 +65,13 @@ const HomeScreen = ({  navigation }) => {
 
 
   function changeLayout() {
- 
+
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(!expanded);
   }
   //first screen loaded
   useEffect(() => {
-    if(animationRef!=null){
+    if (animationRef != null) {
 
       animationRef.play();
     }
@@ -60,22 +81,24 @@ const HomeScreen = ({  navigation }) => {
   useEffect(() => {
     findNearbyRestaurants();
   }, [location]);
- 
+
   useEffect(() => {
-    
-    if (visibleRestaurants && visibleRestaurants.length>0) {
+
+    if (visibleRestaurants && visibleRestaurants.length > 0) {
+      sortRestaurants(true);
+
       navigation.setParams({
         isLoading: false,
       });
 
       setLoaded(true);
-      
-    }else{
+
+    } else {
     }
   }, [visibleRestaurants]);
   //if location changes
   useEffect(() => {
-    if (restaurants && restaurants.length>0) {
+    if (restaurants && restaurants.length > 0) {
       filterNearbyRestaurants();
     }
   }, [restaurants]);
@@ -156,10 +179,11 @@ const HomeScreen = ({  navigation }) => {
   function filterNearbyRestaurants() {
     let restaurantArray = [];
     restaurants.forEach(restaurant => {
-     
-      if (measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
+      let distance = measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
         location.latitude,
-        location.longitude) <= areaRadius) {
+        location.longitude);
+      if (distance < areaRadius) {
+        restaurant.distance = distance;
         restaurantArray.push(restaurant);
       }
     });
@@ -205,7 +229,7 @@ const HomeScreen = ({  navigation }) => {
   return (
 
     <SafeAreaView style={styles.container}>
-      
+
       {isLoaded &&
         <View style={{ flex: 1 }}>
 
@@ -302,8 +326,25 @@ const HomeScreen = ({  navigation }) => {
           <View style={styles.mainView}>
             <View style={styles.filterView}>
               <Text style={{ fontSize: 18, textAlignVertical: "center" }}>Açık Restaurantlar</Text>
-              <FontAwesome name="filter" size={30} style={styles.filterIcon} />
+              <TouchableOpacity onPress={() => { setModalVisible(!modalVisible) }}>
+                <FontAwesome name="filter" size={30} style={styles.filterIcon} /></TouchableOpacity>
+            </View>
 
+            <View style={{ flex: 1 }}>
+              <Modal isVisible={modalVisible} onBackdropPress={() => setModalVisible(!modalVisible)}>
+                <View style={{ backgroundColor: 'white', justifyContent: "center", alignSelf: "center", width: '100%', borderRadius: 20, paddingVertical: 30 }}>
+                  <View title="Show modal">
+                    <TouchableOpacity style={styles.modalInsideView} onPress={() => { setSortMethod(!sortMethod) }}>
+                      <Text style={{ fontSize: 16, textAlign: "center", fontWeight: "bold" }}>Sıralama </Text>
+                      <Text style={{ fontSize: 14, textAlign: "center" }}>{!sortMethod && "Restaurant Puanına Göre"}{sortMethod && "Mesafeye Göre"}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => { sortRestaurants(false) }}
+                      style={{ backgroundColor: '#6CD5AD', paddingVertical: 5, borderRadius: 10, marginHorizontal: 20, marginTop: 20 }}>
+                      <Text style={styles.buttonTextStyle}>Filtreyi Uygula</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
             </View>
             <FlatList style={{ marginBottom: 10, paddingHorizontal: 10 }}
               data={visibleRestaurants}
@@ -327,18 +368,18 @@ const HomeScreen = ({  navigation }) => {
 
         </View>}
 
-        {isLoaded==false && 
+      {isLoaded == false &&
         <View style={styles.animationContainer}>
-        <LottieView
-        ref={(ref) => animationRef = ref}
-          style={{
-            flex:1,
-            
-            backgroundColor: '#fff',
-          }}
-          source={require('../assets/location.json')}
-        />
-        <Text style={{marginTop:200,fontSize:16}}>Etrafındaki Açık Restaurantlar Aranıyor</Text>
+          <LottieView
+            ref={(ref) => animationRef = ref}
+            style={{
+              flex: 1,
+
+              backgroundColor: '#fff',
+            }}
+            source={require('../assets/location.json')}
+          />
+          <Text style={{ marginTop: 200, fontSize: 16 }}>Etrafındaki Açık Restaurantlar Aranıyor</Text>
         </View>
       }
     </SafeAreaView>
@@ -382,14 +423,14 @@ function measure(lat1, lon1, lat2, lon2) {  // generally used geo measurement fu
   return d * 1000; // meters
 }
 HomeScreen.navigationOptions = ({ navigation, route }) => {
-  if (navigation.state.params && navigation.state.params.isLoading==false) {
+  if (navigation.state.params && navigation.state.params.isLoading == false) {
     //Hide Header by returning null
     return { headerShown: true };
   } else {
     //Show Header by returning header
     return { headerShown: false };
   }
-       
+
 };
 
 const styles = StyleSheet.create({
@@ -434,6 +475,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#EBEBEB'
   },
+  modalInsideView: {
+    paddingVertical: 10, marginHorizontal: 10, paddingHorizontal: 10, flexDirection: "row", justifyContent: "space-between",
+  },
   restaurantView: {
     paddingVertical: 8,
     borderBottomWidth: 1,
@@ -477,7 +521,7 @@ const styles = StyleSheet.create({
   ratingView: {
     alignSelf: "flex-end",
     flexDirection: "row",
-    backgroundColor: '#9cafff',
+    backgroundColor: '#6CD5AD',
     borderRadius: 20,
     width: 70
   },

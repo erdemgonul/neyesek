@@ -28,7 +28,7 @@ const navigator = createStackNavigator(
         backgroundColor: '#F1F0F1'
       },
       headerStyle: {
-        backgroundColor: '#9bdeac',
+        backgroundColor: '#F53B50',
       },
       headerTintColor: '#fff',
       headerTitleStyle: {
