@@ -6,7 +6,7 @@ import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from "@brlja/react-native-slider";
 import LottieView from "lottie-react-native";
 import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
-const HomeScreen = ({ route, navigation }) => {
+const HomeScreen = ({  navigation }) => {
   const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   const url = 'http://192.168.1.193:3000';
   const window = Dimensions.get('window');
@@ -70,15 +70,12 @@ const HomeScreen = ({ route, navigation }) => {
 
       setLoaded(true);
       
-      console.log("trueyum");
     }else{
-      console.log("hasiktir");
     }
   }, [visibleRestaurants]);
   //if location changes
   useEffect(() => {
     if (restaurants && restaurants.length>0) {
-      console.log("filter");
       filterNearbyRestaurants();
     }
   }, [restaurants]);
@@ -125,7 +122,6 @@ const HomeScreen = ({ route, navigation }) => {
             arr.push(obj);
 
           }
-          console.log("restoranlar geldi");
           setRestaurants(arr);
         }
       }
@@ -160,12 +156,7 @@ const HomeScreen = ({ route, navigation }) => {
   function filterNearbyRestaurants() {
     let restaurantArray = [];
     restaurants.forEach(restaurant => {
-      console.log(restaurant.geometry.location);
-      console.log(location);
-      console.log(
-        measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
-          location.latitude,
-          location.longitude));
+     
       if (measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
         location.latitude,
         location.longitude) <= areaRadius) {
