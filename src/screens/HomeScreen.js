@@ -97,8 +97,9 @@ const HomeScreen = ({ navigation }) => {
             obj.geometry.location = { "lat": 0, "lng": 0 };
             obj.geometry.location.lat = responseJson[i].location.coordinates[1];
             obj.geometry.location.lng = responseJson[i].location.coordinates[0];
-            arr.push(obj);
+            arr.push(obj);           
           }
+          console.log(arr);
           setRestaurants(arr);  
       }
     } catch (error) {
@@ -111,7 +112,7 @@ const HomeScreen = ({ navigation }) => {
       let distance = measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
         location.latitude,
         location.longitude);
-      if (distance < areaRadius) {
+      if (restaurant.isOpen && distance < areaRadius) {
         restaurant.distance = distance;
         restaurantArray.push(restaurant);
       }
