@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
 import Modal from 'react-native-modal';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
-import Slider from "@brlja/react-native-slider";
 import LottieView from "lottie-react-native";
-import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import DistanceSetter from '../components/DistanceSetter.js';
+import ListItem from '../components/ListItem.js';
+import SortModal from '../components/SortModal.js';
 const HomeScreen = ({ navigation }) => {
   const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   const url = 'http://192.168.1.193:3000';
@@ -17,20 +19,15 @@ const HomeScreen = ({ navigation }) => {
   let [location, setLocation] = useState(null);
   let [markerLocation, setMarkerLocation] = useState(null);
   let [isLoaded, setLoaded] = useState(false);
-  let [expanded, setExpanded] = useState(false);
-  let [locationName, setLocationName] = useState('Mevcut Konum');
   let [modalVisible, setModalVisible] = useState(false);
   let [areaRadius, setAreaRadius] = useState(1000);
   let [restaurants, setRestaurants] = useState(null);
   let [visibleRestaurants, setVisibleRestaurants] = useState(null);
   let [sortMethod, setSortMethod] = useState(false); // false means rating, true means distance
-
+  let [locationName, setLocationName] = useState('Mevcut Konum');
   let mapRef = null;
   let animationRef = null;
 
-  if (Platform.OS === 'android') {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }
 
   function sortRestaurants(isFirstLoad) {
     if (!isFirstLoad)
@@ -64,11 +61,6 @@ const HomeScreen = ({ navigation }) => {
   }
 
 
-  function changeLayout() {
-
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(!expanded);
-  }
   //first screen loaded
   useEffect(() => {
     if (animationRef != null) {
@@ -136,7 +128,6 @@ const HomeScreen = ({ navigation }) => {
           let responseJson = await response.json();
           let arr = [];
           for (let i = 0; i < responseJson.length; i++) {
-            const element = responseJson[i];
             let obj = responseJson[i];
             obj.geometry = { "location": null };
             obj.geometry.location = { "lat": 0, "lng": 0 };
@@ -209,21 +200,12 @@ const HomeScreen = ({ navigation }) => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
       setErrorMessage('Permission to access location was denied');
+    } else {
+      let x = await Location.getCurrentPositionAsync({});
+      let locationTuple = { lat: x.coords.latitude, lng: x.coords.longitude };
+      setLocationAndMarkerLocation(locationTuple);
+      fitZoomArea(areaRadius);
     }
-
-    let x = await Location.getCurrentPositionAsync({});
-
-    setLocation({
-      latitude: x.coords.latitude,
-      longitude: x.coords.longitude,
-      latitudeDelta: LATITUD_DELTA,
-      longitudeDelta: LONGITUDE_DELTA,
-    });
-    setMarkerLocation({
-      latitude: x.coords.latitude,
-      longitude: x.coords.longitude,
-    });
-    fitZoomArea(areaRadius);
   };
 
   return (
@@ -233,89 +215,8 @@ const HomeScreen = ({ navigation }) => {
       {isLoaded &&
         <View style={{ flex: 1 }}>
 
-          <View>
-            <TouchableOpacity onPress={() => { changeLayout() }} >
-              <View style={{
-                borderRadius: 40,
-                paddingHorizontal: 10,
-                backgroundColor: '#ffffff',
-                paddingVertical: 5,
-                marginHorizontal: 5,
-                marginVertical: 5,
-
-              }}>
-
-                <View style={{
-                  borderBottomWidth: expanded ? 1 : 0, borderColor: '#EBEBEB', paddingBottom: expanded ? 10 : 0,
-                  marginBottom: expanded ? 10 : 0,
-                }}>
-
-                  <View style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    paddingBottom: expanded ? 10 : 0,
-                    marginBottom: expanded ? 10 : 0,
-                  }}>
-
-                    <View style={{ flexDirection: "row", }}>
-                      <MaterialIcons name="location-on" size={35} style={styles.locationIcon} />
-                      <View>
-                        <Text style={styles.currentLocationText}>{locationName.substring(0, 40)}{locationName.length > 40 ? "..." : ""}</Text>
-                        <Text style={styles.currentMeterText}>{areaRadius} metre çevresindeki restaurantlar</Text>
-                      </View>
-                    </View>
-                    <MaterialIcons name="keyboard-arrow-right" size={35} style={styles.rightArrowIcon} />
-
-                  </View>
-                  <View style={{
-                    height: expanded ? null : 0, overflow: 'hidden',
-                    paddingHorizontal: 10,
-                    backgroundColor: '#ffffff',
-                    marginHorizontal: 5,
-
-                  }}>
-
-                    <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }}
-                      style={{ backgroundColor: '#9bdeac', paddingVertical: 5, borderRadius: 20 }}>
-                      <Text style={styles.buttonTextStyle}>Konumunu Değiştir</Text>
-                    </TouchableOpacity>
-
-                  </View>
-                </View>
-
-
-                <View style={{
-                  height: expanded ? null : 0, overflow: 'hidden',
-                  paddingHorizontal: 10,
-                  backgroundColor: '#ffffff',
-                  marginHorizontal: 5,
-
-                }}>
-
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginHorizontal: 5 }}>
-                    <Text style={{ fontSize: 14 }}>Mesafeyi Ayarlayın</Text>
-                    <Text style={{ fontSize: 14 }}>{areaRadius} METRE</Text>
-                  </View>
-                  <Slider
-                    onValueChange={value => fitZoomArea(value)}
-                    minimumValue={250}
-                    maximumValue={2000}
-                    value={areaRadius}
-                    step={250}
-                    thumbTintColor={'#FF7478'}
-                    trackStyle={{ backgroundColor: '#EBEBEB' }}
-                    minimumTrackTintColor={'#dbdbdb'}
-                  />
-                </View>
-
-              </View>
-
-
-
-            </TouchableOpacity>
-
-          </View>
+          <DistanceSetter navigation={navigation} onSliderChange={newValue => fitZoomArea(newValue)}
+           areaRadius={areaRadius} locationName={locationName} />
 
           <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
             <Marker coordinate={markerLocation}></Marker>
@@ -329,38 +230,12 @@ const HomeScreen = ({ navigation }) => {
               <TouchableOpacity onPress={() => { setModalVisible(!modalVisible) }}>
                 <FontAwesome name="filter" size={30} style={styles.filterIcon} /></TouchableOpacity>
             </View>
-
-            <View style={{ flex: 1 }}>
-              <Modal isVisible={modalVisible} onBackdropPress={() => setModalVisible(!modalVisible)}>
-                <View style={{ backgroundColor: 'white', justifyContent: "center", alignSelf: "center", width: '100%', borderRadius: 20, paddingVertical: 30 }}>
-                  <View title="Show modal">
-                    <TouchableOpacity style={styles.modalInsideView} onPress={() => { setSortMethod(!sortMethod) }}>
-                      <Text style={{ fontSize: 16, textAlign: "center", fontWeight: "bold" }}>Sıralama </Text>
-                      <Text style={{ fontSize: 14, textAlign: "center" }}>{!sortMethod && "Restaurant Puanına Göre"}{sortMethod && "Mesafeye Göre"}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => { sortRestaurants(false) }}
-                      style={{ backgroundColor: '#6CD5AD', paddingVertical: 5, borderRadius: 10, marginHorizontal: 20, marginTop: 20 }}>
-                      <Text style={styles.buttonTextStyle}>Filtreyi Uygula</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </Modal>
-            </View>
             <FlatList style={{ marginBottom: 10, paddingHorizontal: 10 }}
               data={visibleRestaurants}
               extraData={visibleRestaurants}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
-                <View style={styles.restaurantView}>
-                  <TouchableOpacity style={{ flexDirection: "row", justifyContent: "space-between" }}
-                    onPress={() => { getPlaceDetails(item.place_id) }}>
-                    <Text style={styles.restaurantNames}>{item.name}</Text>
-                    <View style={styles.ratingView}>
-                      <AntDesign name="star" size={15} style={styles.starIcon} />
-                      <Text style={styles.ratingText}>{item.rating}</Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
+                <ListItem onClicked={clickedPlaceID => getPlaceDetails(clickedPlaceID)} item={item}/>
               )}
             />
 
@@ -382,6 +257,9 @@ const HomeScreen = ({ navigation }) => {
           <Text style={{ marginTop: 200, fontSize: 16 }}>Etrafındaki Açık Restaurantlar Aranıyor</Text>
         </View>
       }
+      <SortModal modalVisible={modalVisible} sortMethod={sortMethod} 
+            changeSortMethod={()=> setSortMethod(!sortMethod)} sortRestaurants={() => sortRestaurants(false)}
+            backdropPress={()=>setModalVisible(false)}/>
     </SafeAreaView>
   );
 
@@ -452,16 +330,6 @@ const styles = StyleSheet.create({
   map: {
     flex: 1 / 2,//height 300 def
   },
-  buttonStyle: {
-    borderRadius: 10,
-    backgroundColor: "#FB4D6A"
-  },
-  buttonTextStyle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    textAlign: "center",
-    paddingVertical: 5
-  },
   mainView: {
     marginHorizontal: 5,
     flex: 1,
@@ -478,57 +346,10 @@ const styles = StyleSheet.create({
   modalInsideView: {
     paddingVertical: 10, marginHorizontal: 10, paddingHorizontal: 10, flexDirection: "row", justifyContent: "space-between",
   },
-  restaurantView: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderColor: '#EBEBEB',
-  },
-  restaurantNames: {
-    fontSize: 15,
-    marginVertical: 5,
-    marginHorizontal: 10,
-  },
-  locationIcon: {
-    alignSelf: "center",
-    marginLeft: 5,
-    color: 'black'
-  },
-  rightArrowIcon: {
-    alignSelf: "center",
-    color: 'black'
-  },
   filterIcon: {
     alignSelf: "center",
     color: '#3a3a3a',
   },
-  starIcon: {
-    color: 'white',
-    marginLeft: 10,
-    alignSelf: "center",
-  },
-  currentLocationText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    color: '#272727',
-
-  },
-  currentMeterText: {
-    fontSize: 12,
-    marginLeft: 10,
-    color: '#272727',
-  },
-  ratingView: {
-    alignSelf: "flex-end",
-    flexDirection: "row",
-    backgroundColor: '#6CD5AD',
-    borderRadius: 20,
-    width: 70
-  },
-  ratingText: {
-    fontSize: 12, paddingLeft: 10, paddingVertical: 5, color: 'white',
-    fontWeight: "bold"
-  }
 });
 
 
