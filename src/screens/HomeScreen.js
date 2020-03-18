@@ -24,6 +24,8 @@ const HomeScreen = ({ navigation }) => {
   let [visibleRestaurants, setVisibleRestaurants] = useState(null);
   let [sortMethod, setSortMethod] = useState(false); // false means rating, true means distance
   let [locationName, setLocationName] = useState('Mevcut Konum');
+  let [animationEnd, setAnimationEnd] = useState(false);
+
   let mapRef = null;
   let animationRef = null;
 
@@ -31,18 +33,26 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     getLocationAsync();
   }, []);
+
   //if location changes
   useEffect(() => {
     findNearbyRestaurants();
   }, [location]);
-
+  useEffect(() => {
+    filterNearbyRestaurants();
+  }, [areaRadius]);
   useEffect(() => {
     if (visibleRestaurants && visibleRestaurants.length > 0) {
-      sortRestaurants(true);
-      navigation.setParams({
-        isLoading: false,
-      });
-      setLoaded(true);
+     if(!isLoaded){
+
+        navigation.setParams({
+          isLoading: false,
+        });
+        setLoaded(true);
+     }else{
+       fitZoomArea(areaRadius);
+     }
+      
     }
   }, [visibleRestaurants]);
   //if location changes
@@ -117,8 +127,9 @@ const HomeScreen = ({ navigation }) => {
         restaurantArray.push(restaurant);
       }
     });
-
-    setVisibleRestaurants(restaurantArray);
+    console.log(restaurantArray.length);
+    let sortedRestaurants=sortRestaurants(true,restaurantArray);
+    setVisibleRestaurants(sortedRestaurants);
   }
   async function getPlaceDetails(place_id) {
     try {
@@ -146,18 +157,14 @@ const HomeScreen = ({ navigation }) => {
   }
  
   function fitZoomArea(value) {
-    if (value % 250 == 0) { // DÜZELTMEYİ UNUTMA
-      setAreaRadius(value);
-
+   
       if (mapRef != null) {
         const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
+              console.log("DENEME");
 
-        mapRef.fitToCoordinates(points, {
-          animated: true
-        })
-        filterNearbyRestaurants();
+        mapRef.fitToCoordinates( points,100);
+        
       }
-    }
   }
 
   return (
@@ -167,7 +174,7 @@ const HomeScreen = ({ navigation }) => {
       {isLoaded &&
         <View style={{ flex: 1 }}>
 
-          <DistanceSetter navigation={navigation} onSliderChange={newValue => fitZoomArea(newValue)}
+          <DistanceSetter navigation={navigation} onSliderChange={newValue => setAreaRadius(newValue)}
             areaRadius={areaRadius} locationName={locationName} />
 
           <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
@@ -201,10 +208,10 @@ const HomeScreen = ({ navigation }) => {
         backdropPress={() => setModalVisible(false)} />
     </SafeAreaView>
   );
-  function sortRestaurants(isFirstLoad) {
+  function sortRestaurants(isFirstLoad,restaurantsUnsorted) {
     if (!isFirstLoad)
       setModalVisible(!modalVisible);
-    let unsortedRestaurants = visibleRestaurants;
+    let unsortedRestaurants = restaurantsUnsorted;
     if (sortMethod) {
       // sort by rating
       unsortedRestaurants.sort(function (a, b) {
@@ -217,7 +224,7 @@ const HomeScreen = ({ navigation }) => {
           || -(a.rating > b.rating) || +(a.rating < b.rating);
       });
     }
-    setVisibleRestaurants(unsortedRestaurants);
+    return unsortedRestaurants;
   }
   function setLocationAndMarkerLocation(latlng) {
     setMarkerLocation({

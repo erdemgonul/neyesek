@@ -82,7 +82,7 @@ const DistanceSetter = ({ navigation ,onSliderChange , areaRadius, locationName}
                 <Text style={{ fontSize: 14 }}>{areaRadius} METRE</Text>
               </View>
               <Slider
-                onValueChange={value => onSliderChange(value)}
+                onSlidingComplete={value => onSliderChange(value)}
                 minimumValue={250}
                 maximumValue={2000}
                 value={areaRadius}
