@@ -33,24 +33,25 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     getLocationAsync();
   }, []);
-
+ 
   //if location changes
   useEffect(() => {
     findNearbyRestaurants();
   }, [location]);
   useEffect(() => {
+    if(restaurants && isLoaded)
     filterNearbyRestaurants();
   }, [areaRadius]);
   useEffect(() => {
     if (visibleRestaurants && visibleRestaurants.length > 0) {
      if(!isLoaded){
-
+      
         navigation.setParams({
           isLoading: false,
         });
         setLoaded(true);
      }else{
-       fitZoomArea(areaRadius);
+      fitZoomArea(areaRadius);
      }
       
     }
@@ -82,7 +83,7 @@ const HomeScreen = ({ navigation }) => {
       let x = await Location.getCurrentPositionAsync({});
       let locationTuple = { lat: x.coords.latitude, lng: x.coords.longitude };
       setLocationAndMarkerLocation(locationTuple);
-      fitZoomArea(areaRadius);
+      
     }
   };
   async function findNearbyRestaurants() {
@@ -177,7 +178,7 @@ const HomeScreen = ({ navigation }) => {
           <DistanceSetter navigation={navigation} onSliderChange={newValue => setAreaRadius(newValue)}
             areaRadius={areaRadius} locationName={locationName} />
 
-          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
+          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref}  onMapReady={() => setTimeout(()=>fitZoomArea(areaRadius),1000)}>
             <Marker coordinate={markerLocation}></Marker>
             <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(20, 0, 0, 0.1)"
               strokeColor="rgba(0,0,0,0.1)" zIndex={2} />
