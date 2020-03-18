@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, TouchableOpacity} from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 
 const ListItem = ({ onClicked, item }) => {
@@ -9,16 +9,20 @@ const ListItem = ({ onClicked, item }) => {
             <TouchableOpacity style={{ flexDirection: "row", justifyContent: "space-between" }}
                 onPress={() => { onClicked(item.place_id) }}>
                 <Text style={styles.restaurantNames}>{item.name}</Text>
-                <View style={styles.ratingView}>
-                    <AntDesign name="star" size={15} style={styles.starIcon} />
-                    <Text style={styles.ratingText}>{item.rating}</Text>
-                </View>
+                {item.rating != null ?
+                    <View style={styles.ratingView}>
+                        <AntDesign name="star" size={15} style={styles.starIcon} />
+                        <Text style={styles.ratingText}>{item.rating != null ? item.rating : "yeni"}</Text>
+                    </View>
+                    :
+                    <View style={styles.noRatingView}>
+                        <Text style={styles.noRatingText}>Yeni</Text>
+                    </View>
+                }
             </TouchableOpacity>
         </View>
-
     );
 };
-
 
 const styles = StyleSheet.create({
 
@@ -44,8 +48,20 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         width: 70
     },
+    noRatingView: {
+        alignSelf: "flex-end",
+        flexDirection: "row",
+        backgroundColor: 'pink',
+        borderRadius: 20,
+        paddingHorizontal: 22,
+
+    },
     ratingText: {
         fontSize: 12, paddingLeft: 10, paddingVertical: 5, color: 'white',
+        fontWeight: "bold"
+    },
+    noRatingText: {
+        fontSize: 12, paddingVertical: 5, color: 'white',
         fontWeight: "bold"
     }
 });

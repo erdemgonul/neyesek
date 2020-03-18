@@ -61,7 +61,7 @@ const DistanceSetter = ({ navigation ,onSliderChange , areaRadius, locationName}
               }}>
 
                 <TouchableOpacity onPress={() => { navigation.navigate('ChangeLocation') }}
-                  style={{ backgroundColor: '#9bdeac', paddingVertical: 5, borderRadius: 20 }}>
+                  style={{ backgroundColor: '#6CD5AD', paddingVertical: 5, borderRadius: 15 }}>
                   <Text style={styles.buttonTextStyle}>Konumunu Değiştir</Text>
                 </TouchableOpacity>
 

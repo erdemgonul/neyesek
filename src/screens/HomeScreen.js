@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
-import Modal from 'react-native-modal';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
-import LottieView from "lottie-react-native";
 import { FontAwesome } from '@expo/vector-icons';
 import DistanceSetter from '../components/DistanceSetter.js';
 import ListItem from '../components/ListItem.js';
 import SortModal from '../components/SortModal.js';
+import Loading from '../components/Loading.js';
 const HomeScreen = ({ navigation }) => {
   const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   const url = 'http://192.168.1.193:3000';
@@ -28,7 +27,179 @@ const HomeScreen = ({ navigation }) => {
   let mapRef = null;
   let animationRef = null;
 
+  //first screen loaded
+  useEffect(() => {
+    getLocationAsync();
+  }, []);
+  //if location changes
+  useEffect(() => {
+    findNearbyRestaurants();
+  }, [location]);
 
+  useEffect(() => {
+    if (visibleRestaurants && visibleRestaurants.length > 0) {
+      sortRestaurants(true);
+      navigation.setParams({
+        isLoading: false,
+      });
+      setLoaded(true);
+    }
+  }, [visibleRestaurants]);
+  //if location changes
+  useEffect(() => {
+    if (restaurants && restaurants.length > 0)
+      filterNearbyRestaurants();
+  }, [restaurants]);
+  //if new location selected
+  useEffect(() => {
+
+    if (navigation.getParam('data')) {
+      if (navigation.getParam('data').geometry === 'mylocation') {
+        getLocationAsync();
+        setLocationName("Mevcut Konumum");
+      } else {
+        setLocationAndMarkerLocation(navigation.getParam('data').geometry.location);
+        setLocationName(navigation.getParam('data').name);
+      }
+    }
+  }, [navigation.getParam('data')]);
+
+  async function getLocationAsync() {
+    let { status } = await Permissions.askAsync(Permissions.LOCATION);
+    if (status !== 'granted')
+      setErrorMessage('Permission to access location was denied');
+    else {
+      let x = await Location.getCurrentPositionAsync({});
+      let locationTuple = { lat: x.coords.latitude, lng: x.coords.longitude };
+      setLocationAndMarkerLocation(locationTuple);
+      fitZoomArea(areaRadius);
+    }
+  };
+  async function findNearbyRestaurants() {
+    try {
+      if (location) {
+          let response = await fetch(url + '/api/getNearbyRestaurants', {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              location: location,
+              areaRadius: areaRadius
+            }),
+          });
+          let responseJson = await response.json();
+          let arr = [];
+          for (let i = 0; i < responseJson.length; i++) {
+            let obj = responseJson[i];
+            obj.geometry = { "location": null };
+            obj.geometry.location = { "lat": 0, "lng": 0 };
+            obj.geometry.location.lat = responseJson[i].location.coordinates[1];
+            obj.geometry.location.lng = responseJson[i].location.coordinates[0];
+            arr.push(obj);
+          }
+          setRestaurants(arr);  
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  function filterNearbyRestaurants() {
+    let restaurantArray = [];
+    restaurants.forEach(restaurant => {
+      let distance = measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
+        location.latitude,
+        location.longitude);
+      if (distance < areaRadius) {
+        restaurant.distance = distance;
+        restaurantArray.push(restaurant);
+      }
+    });
+
+    setVisibleRestaurants(restaurantArray);
+  }
+  async function getPlaceDetails(place_id) {
+    try {
+      let response = await fetch(url + '/api/getPlaceDetails', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rest_id: place_id
+        }),
+      });
+      let responseJson = await response.json();
+      let obj = responseJson;
+      obj.geometry = { "location": null };
+      obj.geometry.location = { "lat": 0, "lng": 0 };
+      obj.geometry.location.lat = responseJson.location.coordinates[1];
+      obj.geometry.location.lng = responseJson.location.coordinates[0];
+      navigation.navigate('RestaurantScreen',
+        { restaurant: obj })
+    } catch (error) {
+      console.error(error);
+    }
+  }
+ 
+  function fitZoomArea(value) {
+    if (value % 250 == 0) { // DÜZELTMEYİ UNUTMA
+      setAreaRadius(value);
+
+      if (mapRef != null) {
+        const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
+
+        mapRef.fitToCoordinates(points, {
+          animated: true
+        })
+        filterNearbyRestaurants();
+      }
+    }
+  }
+
+  return (
+
+    <SafeAreaView style={styles.container}>
+
+      {isLoaded &&
+        <View style={{ flex: 1 }}>
+
+          <DistanceSetter navigation={navigation} onSliderChange={newValue => fitZoomArea(newValue)}
+            areaRadius={areaRadius} locationName={locationName} />
+
+          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
+            <Marker coordinate={markerLocation}></Marker>
+            <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(20, 0, 0, 0.1)"
+              strokeColor="rgba(0,0,0,0.1)" zIndex={2} />
+          </MapView>
+
+          <View style={styles.mainView}>
+            <View style={styles.filterView}>
+              <Text style={{ fontSize: 18, textAlignVertical: "center" }}>Açık Restaurantlar</Text>
+              <TouchableOpacity onPress={() => { setModalVisible(!modalVisible) }}>
+                <FontAwesome name="filter" size={30} style={styles.filterIcon} /></TouchableOpacity>
+            </View>
+            <FlatList style={{ marginBottom: 10, paddingHorizontal: 10 }}
+              data={visibleRestaurants} extraData={visibleRestaurants}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <ListItem onClicked={clickedPlaceID => getPlaceDetails(clickedPlaceID)} item={item} />
+              )}
+            />
+          </View>
+        </View>
+      }
+
+      {!isLoaded &&
+        <Loading animationRef={animationRef} />
+      }
+      <SortModal modalVisible={modalVisible} sortMethod={sortMethod}
+        changeSortMethod={() => setSortMethod(!sortMethod)} sortRestaurants={() => sortRestaurants(false)}
+        backdropPress={() => setModalVisible(false)} />
+    </SafeAreaView>
+  );
   function sortRestaurants(isFirstLoad) {
     if (!isFirstLoad)
       setModalVisible(!modalVisible);
@@ -59,210 +230,6 @@ const HomeScreen = ({ navigation }) => {
       longitudeDelta: LONGITUDE_DELTA,
     });
   }
-
-
-  //first screen loaded
-  useEffect(() => {
-    if (animationRef != null) {
-
-      animationRef.play();
-    }
-    getLocationAsync();
-  }, []);
-  //if location changes
-  useEffect(() => {
-    findNearbyRestaurants();
-  }, [location]);
-
-  useEffect(() => {
-
-    if (visibleRestaurants && visibleRestaurants.length > 0) {
-      sortRestaurants(true);
-
-      navigation.setParams({
-        isLoading: false,
-      });
-
-      setLoaded(true);
-
-    } else {
-    }
-  }, [visibleRestaurants]);
-  //if location changes
-  useEffect(() => {
-    if (restaurants && restaurants.length > 0) {
-      filterNearbyRestaurants();
-    }
-  }, [restaurants]);
-  //if new location selected
-  useEffect(() => {
-
-    if (navigation.getParam('data')) {
-      if (navigation.getParam('data').geometry === 'mylocation') {
-        getLocationAsync();
-        setLocationName("Mevcut Konumum");
-      } else {
-        setLocationAndMarkerLocation(navigation.getParam('data').geometry.location);
-        setLocationName(navigation.getParam('data').name);
-      }
-    }
-  }, [navigation.getParam('data')]);
-
-  async function findNearbyRestaurants() {
-    try {
-      if (location) {
-
-        if (true) {
-
-          let response = await fetch(url + '/api/getNearbyRestaurants', {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              location: location,
-              areaRadius: areaRadius
-            }),
-          });
-          let responseJson = await response.json();
-          let arr = [];
-          for (let i = 0; i < responseJson.length; i++) {
-            let obj = responseJson[i];
-            obj.geometry = { "location": null };
-            obj.geometry.location = { "lat": 0, "lng": 0 };
-            obj.geometry.location.lat = responseJson[i].location.coordinates[1];
-            obj.geometry.location.lng = responseJson[i].location.coordinates[0];
-            arr.push(obj);
-
-          }
-          setRestaurants(arr);
-        }
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-  async function getPlaceDetails(place_id) {
-    try {
-      let response = await fetch(url + '/api/getPlaceDetails', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rest_id: place_id
-        }),
-      });
-      let responseJson = await response.json();
-      let obj = responseJson;
-      obj.geometry = { "location": null };
-      obj.geometry.location = { "lat": 0, "lng": 0 };
-      obj.geometry.location.lat = responseJson.location.coordinates[1];
-      obj.geometry.location.lng = responseJson.location.coordinates[0];
-      navigation.navigate('RestaurantScreen',
-        { restaurant: obj })
-    } catch (error) {
-      console.error(error);
-    }
-  }
-  function filterNearbyRestaurants() {
-    let restaurantArray = [];
-    restaurants.forEach(restaurant => {
-      let distance = measure(restaurant.geometry.location.lat, restaurant.geometry.location.lng,
-        location.latitude,
-        location.longitude);
-      if (distance < areaRadius) {
-        restaurant.distance = distance;
-        restaurantArray.push(restaurant);
-      }
-    });
-
-    setVisibleRestaurants(restaurantArray);
-  }
-  function fitZoomArea(value) {
-    if (value % 250 == 0) { // DÜZELTMEYİ UNUTMA
-      setAreaRadius(value);
-
-      if (mapRef != null) {
-        const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
-
-        mapRef.fitToCoordinates(points, {
-          animated: true
-        })
-        filterNearbyRestaurants();
-      }
-    }
-  }
-
-  async function getLocationAsync() {
-    let { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status !== 'granted') {
-      setErrorMessage('Permission to access location was denied');
-    } else {
-      let x = await Location.getCurrentPositionAsync({});
-      let locationTuple = { lat: x.coords.latitude, lng: x.coords.longitude };
-      setLocationAndMarkerLocation(locationTuple);
-      fitZoomArea(areaRadius);
-    }
-  };
-
-  return (
-
-    <SafeAreaView style={styles.container}>
-
-      {isLoaded &&
-        <View style={{ flex: 1 }}>
-
-          <DistanceSetter navigation={navigation} onSliderChange={newValue => fitZoomArea(newValue)}
-           areaRadius={areaRadius} locationName={locationName} />
-
-          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
-            <Marker coordinate={markerLocation}></Marker>
-            <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(20, 0, 0, 0.1)"
-              strokeColor="rgba(0,0,0,0.1)" zIndex={2} />
-          </MapView>
-
-          <View style={styles.mainView}>
-            <View style={styles.filterView}>
-              <Text style={{ fontSize: 18, textAlignVertical: "center" }}>Açık Restaurantlar</Text>
-              <TouchableOpacity onPress={() => { setModalVisible(!modalVisible) }}>
-                <FontAwesome name="filter" size={30} style={styles.filterIcon} /></TouchableOpacity>
-            </View>
-            <FlatList style={{ marginBottom: 10, paddingHorizontal: 10 }}
-              data={visibleRestaurants}
-              extraData={visibleRestaurants}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <ListItem onClicked={clickedPlaceID => getPlaceDetails(clickedPlaceID)} item={item}/>
-              )}
-            />
-
-          </View>
-
-        </View>}
-
-      {isLoaded == false &&
-        <View style={styles.animationContainer}>
-          <LottieView
-            ref={(ref) => animationRef = ref}
-            style={{
-              flex: 1,
-
-              backgroundColor: '#fff',
-            }}
-            source={require('../assets/location.json')}
-          />
-          <Text style={{ marginTop: 200, fontSize: 16 }}>Etrafındaki Açık Restaurantlar Aranıyor</Text>
-        </View>
-      }
-      <SortModal modalVisible={modalVisible} sortMethod={sortMethod} 
-            changeSortMethod={()=> setSortMethod(!sortMethod)} sortRestaurants={() => sortRestaurants(false)}
-            backdropPress={()=>setModalVisible(false)}/>
-    </SafeAreaView>
-  );
-
   function get4PointsAroundCircumference(latitude, longitude, radius) {
     const earthRadius = 6378.1 //Km
     const lat0 = latitude + (-radius / earthRadius) * 1 / 1000 * (180 / Math.PI)
@@ -300,7 +267,7 @@ function measure(lat1, lon1, lat2, lon2) {  // generally used geo measurement fu
   var d = R * c;
   return d * 1000; // meters
 }
-HomeScreen.navigationOptions = ({ navigation, route }) => {
+HomeScreen.navigationOptions = ({ navigation }) => {
   if (navigation.state.params && navigation.state.params.isLoading == false) {
     //Hide Header by returning null
     return { headerShown: true };
@@ -308,16 +275,9 @@ HomeScreen.navigationOptions = ({ navigation, route }) => {
     //Show Header by returning header
     return { headerShown: false };
   }
-
 };
 
 const styles = StyleSheet.create({
-  animationContainer: {
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
   container: {
     flex: 1,
     backgroundColor: "#F1F0F1"
@@ -342,9 +302,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10, marginHorizontal: 10, paddingHorizontal: 10, flexDirection: "row", justifyContent: "space-between",
     borderBottomWidth: 1,
     borderColor: '#EBEBEB'
-  },
-  modalInsideView: {
-    paddingVertical: 10, marginHorizontal: 10, paddingHorizontal: 10, flexDirection: "row", justifyContent: "space-between",
   },
   filterIcon: {
     alignSelf: "center",
