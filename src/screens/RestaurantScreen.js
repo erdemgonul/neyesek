@@ -9,12 +9,13 @@ const RestaurantScreen = ({ navigation }) => {
         { width, height } = window;
   let LATITUD_DELTA = 0.009;
   const LONGITUDE_DELTA = LATITUD_DELTA / 1000 * (width / height);
+  const DEFAULT_PADDING = { top: 40, right: 40, bottom: 40, left: 40 };
   let [location, setLocation] = useState(null),
       [markerLocation, setMarkerLocation] = useState(null),
       [isLoaded, setLoaded] = useState(false),
       [restaurant, setRestaurant] = useState(null),
       [userLocation, setUserLocation] = useState(null);
-
+  let mapRef=null;
   //when page loaded with restaurant
   useEffect(() => {
     if (navigation.getParam('restaurant')) {
@@ -25,6 +26,8 @@ const RestaurantScreen = ({ navigation }) => {
 
   useEffect(() => {
     setLoaded(true);
+
+
   }, [userLocation]);
   function setLocationAndMarkerLocation(latlng) {
     setMarkerLocation({
@@ -38,6 +41,13 @@ const RestaurantScreen = ({ navigation }) => {
       longitudeDelta: LONGITUDE_DELTA,
     });
     setUserLocation(navigation.getParam('userLocation'));
+  }
+  function fitMarkers(){
+    if(mapRef)
+    mapRef.fitToCoordinates([markerLocation, userLocation], {
+      edgePadding: DEFAULT_PADDING,
+      animated: true,
+    });
   }
   return (
 
@@ -97,7 +107,7 @@ const RestaurantScreen = ({ navigation }) => {
 
           </View>
 
-          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
+          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} onMapReady={()=> setTimeout(()=>fitMarkers(),1000)} ref={(ref) => mapRef = ref}  >
             <Marker coordinate={markerLocation} tracksViewChanges={false}>
               <MaterialIcons name="location-on" size={50} style={{ color: '#F53B50' }}></MaterialIcons>
             </Marker>

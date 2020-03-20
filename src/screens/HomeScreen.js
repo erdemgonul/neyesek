@@ -65,9 +65,17 @@ const HomeScreen = ({ navigation }) => {
 
     if (navigation.getParam('data')) {
       if (navigation.getParam('data').geometry === 'mylocation') {
+        setLoaded(false);
+        navigation.setParams({
+          isLoading: true,
+        });
         getLocationAsync();
         setLocationName("Mevcut Konumum");
       } else {
+        setLoaded(false);
+        navigation.setParams({
+          isLoading: true,
+        });
         setLocationAndMarkerLocation(navigation.getParam('data').geometry.location);
         setLocationName(navigation.getParam('data').name);
       }

@@ -14,13 +14,13 @@ const Loading = ({ animationRef }) => {
           <LottieView
             ref={(ref) => animationRef = ref}
             style={{
-              flex: 1,
-
+             width:300,
               backgroundColor: '#fff',
             }}
+            resizeMode="cover"
             source={require('../assets/location.json')}
           />
-          <Text style={{ marginTop: 200, fontSize: 16 }}>Etrafındaki Açık Restaurantlar Aranıyor</Text>
+          <Text style={{ marginTop: 0, fontSize: 20 ,fontStyle:'italic'}}>bölgedeki açık restoranlar aranıyor</Text>
         </View>
 
     );
@@ -33,6 +33,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         flex: 1,
+        paddingBottom:100
       },
 });
 
