@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Platform, Text, View, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import Constants from 'expo-constants';
 import SearchBar from '../components/SearchBar';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -10,11 +9,6 @@ const ChangeLocation = ({ navigation }) => {
   const apiKey='AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
   useEffect(() => {
     autoComplete('İstanbul');
-    if (Platform.OS === 'android' && !Constants.isDevice) {
-
-    } else {
-
-    }
   }, []);
 
   async function autoComplete(input) {
@@ -30,11 +24,11 @@ const ChangeLocation = ({ navigation }) => {
   async function changeLocation(location) {
     
     let locData;
-    if(location==='mylocation'){
+    if(location==='mylocation')
       locData={
         "geometry":"mylocation"
       }
-    }else{
+    else{
       let response = await fetch("https://maps.googleapis.com/maps/api/place/details/json?place_id=" +
       location.place_id +"&fields=name,rating,formatted_phone_number,geometry&key="+apiKey);
       let responseJson = await response.json();
@@ -74,10 +68,6 @@ const ChangeLocation = ({ navigation }) => {
     </View>
   );
 }
-ChangeLocation.navigationOptions = ({ navigation }) => {
-  return {}
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

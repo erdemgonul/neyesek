@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
         borderColor: '#EBEBEB',
     },
     restaurantNames: {
-        fontSize: 15,
+        fontSize: 13,
         marginVertical: 5,
         marginHorizontal: 10,
     },

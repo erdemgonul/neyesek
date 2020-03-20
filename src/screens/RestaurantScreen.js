@@ -1,35 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import { Text, View, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView } from 'react-native';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import { Linking } from 'expo';
 const RestaurantScreen = ({ navigation }) => {
 
-  const window = Dimensions.get('window');
-  const { width, height } = window;
+  const window = Dimensions.get('window'),
+        { width, height } = window;
   let LATITUD_DELTA = 0.009;
-  const LONGITUDE_DELTA = LATITUD_DELTA / 1000 * (width / height)
-  let [location, setLocation] = useState(null);
-  let [markerLocation, setMarkerLocation] = useState(null);
-  let [isLoaded, setLoaded] = useState(false);
-  let [restaurant, setRestaurant] = useState(null);
+  const LONGITUDE_DELTA = LATITUD_DELTA / 1000 * (width / height);
+  let [location, setLocation] = useState(null),
+      [markerLocation, setMarkerLocation] = useState(null),
+      [isLoaded, setLoaded] = useState(false),
+      [restaurant, setRestaurant] = useState(null),
+      [userLocation, setUserLocation] = useState(null);
 
-  //first screen loaded
+  //when page loaded with restaurant
   useEffect(() => {
-  }, []);
-  //when page loaded
-  useEffect(() => {
-
     if (navigation.getParam('restaurant')) {
       setRestaurant(navigation.getParam('restaurant'));
       setLocationAndMarkerLocation(navigation.getParam('restaurant').geometry.location);
     }
   }, [navigation.getParam('restaurant')]);
-  useEffect(() => {
-  }, [restaurant]);
+
   useEffect(() => {
     setLoaded(true);
-  }, [location]);
+  }, [userLocation]);
   function setLocationAndMarkerLocation(latlng) {
     setMarkerLocation({
       latitude: latlng.lat,
@@ -41,6 +37,7 @@ const RestaurantScreen = ({ navigation }) => {
       latitudeDelta: LATITUD_DELTA,
       longitudeDelta: LONGITUDE_DELTA,
     });
+    setUserLocation(navigation.getParam('userLocation'));
   }
   return (
 
@@ -51,7 +48,7 @@ const RestaurantScreen = ({ navigation }) => {
           <View style={styles.nameView}>
             <Text style={{ fontSize: 20 }}>{restaurant.name}</Text>
           </View>
-          <View style={{flexDirection:"row",justifyContent:"space-between"}}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             {restaurant.rating ?
               <View style={styles.ratingView}>
                 <AntDesign name="star" size={20}
@@ -66,7 +63,7 @@ const RestaurantScreen = ({ navigation }) => {
             <View style={styles.clockView}>
               <AntDesign name="clockcircle" size={20}
                 style={styles.clockIcon} />
-              <Text style={{ fontSize: 14 ,alignSelf:"center"}}>Şuan Açık</Text>
+              <Text style={{ fontSize: 14, alignSelf: "center" }}>Şuan Açık</Text>
             </View>
 
 
@@ -97,22 +94,16 @@ const RestaurantScreen = ({ navigation }) => {
             </View>
           }
           <View style={{ flex: 2 / 5 }}>
-            <FlatList style={{ marginTop: 10, marginHorizontal: 5 }}
-              data={restaurant.types}
-              extraData={restaurant.types}
-              keyExtractor={(item, index) => index}
-              renderItem={({ item }) => (
-                <View style={styles.restaurantView}>
-                  <Text style={styles.restaurantNames}>{item}</Text>
-                </View>
-              )}
-              numColumns={3}
-              horizontal={false}
-            />
+
           </View>
 
           <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} >
-            <Marker coordinate={markerLocation}></Marker>
+            <Marker coordinate={markerLocation} tracksViewChanges={false}>
+              <MaterialIcons name="location-on" size={50} style={{ color: '#F53B50' }}></MaterialIcons>
+            </Marker>
+            <Marker coordinate={userLocation} tracksViewChanges={false}>
+              <MaterialIcons name="person-pin-circle" size={70} style={{ color: 'black' }}></MaterialIcons>
+            </Marker>
           </MapView>
 
           <TouchableOpacity onPress={() => Linking.openURL('google.navigation:q=' + //add ios support
@@ -126,11 +117,8 @@ const RestaurantScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 }
-RestaurantScreen.navigationOptions = ({ navigation, route }) => {
+RestaurantScreen.navigationOptions = ({ }) => {
   return {
-
-
-
   }
 };
 
@@ -141,12 +129,12 @@ const styles = StyleSheet.create({
   },
   mainView: { flex: 1, marginHorizontal: 10, marginTop: 20 },
   nameView: { paddingVertical: 10, marginBottom: 15, marginHorizontal: 5 },
-  clockView: { flexDirection: "row", justifyContent: "flex-end", marginRight: 10,alignSelf:"center" },
+  clockView: { flexDirection: "row", justifyContent: "flex-end", marginRight: 10, alignSelf: "center" },
   clockIcon: {
     color: '#9bdeac', marginRight: 5, alignSelf: "center",
   },
   ratingView: {
-    flexDirection: "row", backgroundColor: '#6CD5AD',alignSelf:"center",
+    flexDirection: "row", backgroundColor: '#6CD5AD', alignSelf: "center",
     borderRadius: 20, marginLeft: 5
   },
   ratingIcon: {
@@ -154,7 +142,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 14, paddingLeft: 10, paddingVertical: 10, color: 'white',
-    fontWeight: "bold", fontSize: 14,paddingRight:20
+    fontWeight: "bold", fontSize: 12, paddingRight: 20
   },
   addressView: {
     paddingVertical: 10,
@@ -170,13 +158,13 @@ const styles = StyleSheet.create({
     flex: 4 / 5,//height 300 def
   },
   buttonStyle: {
-    borderRadius: 20,
+    borderRadius: 10,
     backgroundColor: '#FB4D6A',
     marginBottom: 20
   },
   buttonTextStyle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     textAlign: "center",
     paddingVertical: 10
   },
@@ -204,10 +192,7 @@ const styles = StyleSheet.create({
     marginLeft: 20,
     marginRight: 10
   },
-  restaurantNames: {
-    color: 'white',
-    fontWeight: "bold"
-  },
+
 });
 
 

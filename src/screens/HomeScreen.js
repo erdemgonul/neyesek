@@ -132,7 +132,7 @@ const HomeScreen = ({ navigation }) => {
   function getPlaceDetails(place_id) {
     const detailRestaurant = visibleRestaurants.find(rest => rest.place_id === place_id);
       navigation.navigate('RestaurantScreen',
-        { restaurant: detailRestaurant })
+        { restaurant: detailRestaurant ,userLocation:location})
   }
 
   function fitZoomArea(value) {
@@ -157,14 +157,14 @@ const HomeScreen = ({ navigation }) => {
             {visibleRestaurants.map(marker => (
               <Marker
                 coordinate={{latitude:marker.location.coordinates[1],longitude:marker.location.coordinates[0]}}
-                key={marker.name}
+                key={marker.name} tracksViewChanges={false}
               >
                 <MaterialIcons name="location-on" size={15} style={{color:'red'}}></MaterialIcons>
               </Marker>
             ))}
              <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(50, 0, 0, 0.05)"
               strokeColor="rgba(0,0,0,0.1)" zIndex={0} />
-            <Marker coordinate={markerLocation}  zIndex={3} >
+            <Marker coordinate={markerLocation}  zIndex={3} tracksViewChanges={false}>
               <MaterialIcons name="person-pin-circle" size={45} style={{color:'black'}}></MaterialIcons>
             </Marker>
            
@@ -172,7 +172,7 @@ const HomeScreen = ({ navigation }) => {
 
           <View style={styles.mainView}>
             <View style={styles.filterView}>
-              <Text style={{ fontSize: 18, textAlignVertical: "center" }}>Açık Restaurantlar</Text>
+              <Text style={{ fontSize: 17, textAlignVertical: "center" }}>Açık Restaurantlar</Text>
               <TouchableOpacity onPress={() => { setModalVisible(!modalVisible) }}>
                 <FontAwesome name="filter" size={30} style={styles.filterIcon} /></TouchableOpacity>
             </View>
