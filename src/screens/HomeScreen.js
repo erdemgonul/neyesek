@@ -82,7 +82,7 @@ const HomeScreen = ({ navigation }) => {
       let x = await Location.getCurrentPositionAsync({});
       let locationTuple = { lat: x.coords.latitude, lng: x.coords.longitude };
       setLocationAndMarkerLocation(locationTuple);
-
+      console.log("wtf");
     }
   };
   async function findNearbyRestaurants() {
@@ -152,16 +152,13 @@ const HomeScreen = ({ navigation }) => {
           <DistanceSetter navigation={navigation} onSliderChange={newValue => setAreaRadius(newValue)}
             areaRadius={areaRadius} locationName={locationName} />
 
-          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} onMapReady={() => setTimeout(() => fitZoomArea(areaRadius), 1000)}>
-            
-            {visibleRestaurants.map(marker => (
-              <Marker
-                coordinate={{latitude:marker.location.coordinates[1],longitude:marker.location.coordinates[0]}}
-                key={marker.name} tracksViewChanges={false}
-              >
-                <MaterialIcons name="location-on" size={15} style={{color:'red'}}></MaterialIcons>
-              </Marker>
-            ))}
+          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} onMapReady={() => setTimeout(() => fitZoomArea(areaRadius),1000)}>
+              {visibleRestaurants && visibleRestaurants.length>0 && visibleRestaurants.map(marker => (
+                <Marker
+                  coordinate={{latitude:marker.location.coordinates[1],longitude:marker.location.coordinates[0]}}
+                  key={marker.place_id} tracksViewChanges={false}
+                />))
+              }
              <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(50, 0, 0, 0.05)"
               strokeColor="rgba(0,0,0,0.1)" zIndex={0} />
             <Marker coordinate={markerLocation}  zIndex={3} tracksViewChanges={false}>
@@ -169,7 +166,6 @@ const HomeScreen = ({ navigation }) => {
             </Marker>
            
           </MapView>
-
           <View style={styles.mainView}>
             <View style={styles.filterView}>
               <Text style={{ fontSize: 17, textAlignVertical: "center" }}>Açık Restaurantlar</Text>
@@ -275,7 +271,7 @@ HomeScreen.navigationOptions = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F1F0F1"
+    backgroundColor: "#F1F0F1",
   },
   location: {
     flexDirection: "row",
@@ -283,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   map: {
-    flex: 1 / 2,//height 300 def
+    flex: 1 / 2,//height 300 def,
   },
   mainView: {
     marginHorizontal: 5,
