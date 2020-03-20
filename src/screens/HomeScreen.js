@@ -3,57 +3,56 @@ import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAre
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome,MaterialIcons } from '@expo/vector-icons';
 import DistanceSetter from '../components/DistanceSetter.js';
 import ListItem from '../components/ListItem.js';
 import SortModal from '../components/SortModal.js';
 import Loading from '../components/Loading.js';
 const HomeScreen = ({ navigation }) => {
-  const apiKey = 'AIzaSyAGPyw4u1dk7j05KfUQOq8BliHI8MDJMEI';
-  const url = 'http://192.168.1.193:3000';
-  const window = Dimensions.get('window');
-  const { width, height } = window;
+  const url = 'http://192.168.1.193:3000',
+        window = Dimensions.get('window'),
+        { width, height } = window;
   let LATITUD_DELTA = 0.009;
-  const LONGITUDE_DELTA = LATITUD_DELTA / 1000 * (width / height)
-  let [location, setLocation] = useState(null);
-  let [markerLocation, setMarkerLocation] = useState(null);
-  let [isLoaded, setLoaded] = useState(false);
-  let [modalVisible, setModalVisible] = useState(false);
-  let [areaRadius, setAreaRadius] = useState(1000);
-  let [restaurants, setRestaurants] = useState(null);
-  let [visibleRestaurants, setVisibleRestaurants] = useState(null);
-  let [sortMethod, setSortMethod] = useState(false); // false means rating, true means distance
-  let [locationName, setLocationName] = useState('Mevcut Konum');
-  let [animationEnd, setAnimationEnd] = useState(false);
+  const LONGITUDE_DELTA = LATITUD_DELTA / 1000 * (width / height);
+      
+  let [location, setLocation] = useState(null),
+      [markerLocation, setMarkerLocation] = useState(null),
+      [isLoaded, setLoaded] = useState(false),
+      [modalVisible, setModalVisible] = useState(false),
+      [areaRadius, setAreaRadius] = useState(1000),
+      [restaurants, setRestaurants] = useState(null),
+      [visibleRestaurants, setVisibleRestaurants] = useState(null),
+      [sortMethod, setSortMethod] = useState(false),// false means rating, true means distance
+      [locationName, setLocationName] = useState('Mevcut Konum');
 
-  let mapRef = null;
-  let animationRef = null;
+  let mapRef = null,
+      animationRef = null;
 
   //first screen loaded
   useEffect(() => {
     getLocationAsync();
   }, []);
- 
+
   //if location changes
   useEffect(() => {
     findNearbyRestaurants();
   }, [location]);
   useEffect(() => {
-    if(restaurants && isLoaded)
-    filterNearbyRestaurants();
+    if (restaurants && isLoaded)
+      filterNearbyRestaurants();
   }, [areaRadius]);
   useEffect(() => {
     if (visibleRestaurants && visibleRestaurants.length > 0) {
-     if(!isLoaded){
-      
+      if (!isLoaded) {
+
         navigation.setParams({
           isLoading: false,
         });
         setLoaded(true);
-     }else{
-      fitZoomArea(areaRadius);
-     }
-      
+      } else {
+        fitZoomArea(areaRadius);
+      }
+
     }
   }, [visibleRestaurants]);
   //if location changes
@@ -83,35 +82,34 @@ const HomeScreen = ({ navigation }) => {
       let x = await Location.getCurrentPositionAsync({});
       let locationTuple = { lat: x.coords.latitude, lng: x.coords.longitude };
       setLocationAndMarkerLocation(locationTuple);
-      
+
     }
   };
   async function findNearbyRestaurants() {
     try {
       if (location) {
-          let response = await fetch(url + '/api/getNearbyRestaurants', {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              location: location,
-              areaRadius: areaRadius
-            }),
-          });
-          let responseJson = await response.json();
-          let arr = [];
-          for (let i = 0; i < responseJson.length; i++) {
-            let obj = responseJson[i];
-            obj.geometry = { "location": null };
-            obj.geometry.location = { "lat": 0, "lng": 0 };
-            obj.geometry.location.lat = responseJson[i].location.coordinates[1];
-            obj.geometry.location.lng = responseJson[i].location.coordinates[0];
-            arr.push(obj);           
-          }
-          console.log(arr);
-          setRestaurants(arr);  
+        let response = await fetch(url + '/api/getNearbyRestaurants', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            location: location,
+            areaRadius: areaRadius
+          }),
+        });
+        let responseJson = await response.json();
+        let arr = [];
+        for (let i = 0; i < responseJson.length; i++) {
+          let obj = responseJson[i];
+          obj.geometry = { "location": null };
+          obj.geometry.location = { "lat": 0, "lng": 0 };
+          obj.geometry.location.lat = responseJson[i].location.coordinates[1];
+          obj.geometry.location.lng = responseJson[i].location.coordinates[0];
+          arr.push(obj);
+        }
+        setRestaurants(arr);
       }
     } catch (error) {
       console.error(error);
@@ -128,44 +126,20 @@ const HomeScreen = ({ navigation }) => {
         restaurantArray.push(restaurant);
       }
     });
-    console.log(restaurantArray.length);
-    let sortedRestaurants=sortRestaurants(true,restaurantArray);
+    let sortedRestaurants = sortRestaurants(true, restaurantArray);
     setVisibleRestaurants(sortedRestaurants);
   }
-  async function getPlaceDetails(place_id) {
-    try {
-      let response = await fetch(url + '/api/getPlaceDetails', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rest_id: place_id
-        }),
-      });
-      let responseJson = await response.json();
-      let obj = responseJson;
-      obj.geometry = { "location": null };
-      obj.geometry.location = { "lat": 0, "lng": 0 };
-      obj.geometry.location.lat = responseJson.location.coordinates[1];
-      obj.geometry.location.lng = responseJson.location.coordinates[0];
+  function getPlaceDetails(place_id) {
+    const detailRestaurant = visibleRestaurants.find(rest => rest.place_id === place_id);
       navigation.navigate('RestaurantScreen',
-        { restaurant: obj })
-    } catch (error) {
-      console.error(error);
-    }
+        { restaurant: detailRestaurant })
   }
- 
-  function fitZoomArea(value) {
-   
-      if (mapRef != null) {
-        const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
-              console.log("DENEME");
 
-        mapRef.fitToCoordinates( points,100);
-        
-      }
+  function fitZoomArea(value) {
+    if (mapRef != null) {
+      const points = get4PointsAroundCircumference(markerLocation.latitude, markerLocation.longitude, value);
+      mapRef.fitToCoordinates(points, 100);
+    }
   }
 
   return (
@@ -178,10 +152,22 @@ const HomeScreen = ({ navigation }) => {
           <DistanceSetter navigation={navigation} onSliderChange={newValue => setAreaRadius(newValue)}
             areaRadius={areaRadius} locationName={locationName} />
 
-          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref}  onMapReady={() => setTimeout(()=>fitZoomArea(areaRadius),1000)}>
-            <Marker coordinate={markerLocation}></Marker>
-            <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(20, 0, 0, 0.1)"
-              strokeColor="rgba(0,0,0,0.1)" zIndex={2} />
+          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} onMapReady={() => setTimeout(() => fitZoomArea(areaRadius), 1000)}>
+            
+            {visibleRestaurants.map(marker => (
+              <Marker
+                coordinate={{latitude:marker.location.coordinates[1],longitude:marker.location.coordinates[0]}}
+                key={marker.name}
+              >
+                <MaterialIcons name="location-on" size={15} style={{color:'red'}}></MaterialIcons>
+              </Marker>
+            ))}
+             <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(50, 0, 0, 0.05)"
+              strokeColor="rgba(0,0,0,0.1)" zIndex={0} />
+            <Marker coordinate={markerLocation}  zIndex={3} >
+              <MaterialIcons name="person-pin-circle" size={45} style={{color:'black'}}></MaterialIcons>
+            </Marker>
+           
           </MapView>
 
           <View style={styles.mainView}>
@@ -205,11 +191,11 @@ const HomeScreen = ({ navigation }) => {
         <Loading animationRef={animationRef} />
       }
       <SortModal modalVisible={modalVisible} sortMethod={sortMethod}
-        changeSortMethod={() => setSortMethod(!sortMethod)} sortRestaurants={() => sortRestaurants(false)}
+        changeSortMethod={() => setSortMethod(!sortMethod)} sortRestaurants={() => sortRestaurants(false,visibleRestaurants)}
         backdropPress={() => setModalVisible(false)} />
     </SafeAreaView>
   );
-  function sortRestaurants(isFirstLoad,restaurantsUnsorted) {
+  function sortRestaurants(isFirstLoad, restaurantsUnsorted) {
     if (!isFirstLoad)
       setModalVisible(!modalVisible);
     let unsortedRestaurants = restaurantsUnsorted;

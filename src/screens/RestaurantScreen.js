@@ -51,39 +51,51 @@ const RestaurantScreen = ({ navigation }) => {
           <View style={styles.nameView}>
             <Text style={{ fontSize: 20 }}>{restaurant.name}</Text>
           </View>
-
-          <View style={styles.clockView}>
-            <AntDesign name="clockcircle" size={20}
-              style={styles.clockIcon} />
-            <Text style={{ fontSize: 14 }}>Şuan Açık</Text>
-          </View>
-
-          <View style={styles.ratingView}>
-            <AntDesign name="star" size={20}
-              style={styles.ratingIcon} />
-            <Text style={styles.ratingText}>{restaurant.rating} / 5</Text>
-          </View>
-
-          <View style={styles.addressView}>
-            <Text style={{ fontSize: 14 }}>Adres : {restaurant.formatted_address}</Text>
-          </View>
-
-          <View style={styles.phoneView}>
-            <View style={{ justifyContent: "center" }}>
-              <Text style={{ fontSize: 16, marginLeft: 10 }}>
-                Telefon : {restaurant.formatted_phone_number}</Text>
-            </View>
-            <View >
-              <TouchableOpacity style={styles.phoneButtonView}
-                onPress={() => Linking.openURL(
-                  'tel:' + restaurant.formatted_phone_number)}>
-                <MaterialIcons name="call" size={20}
-                  style={styles.callIcon} />
-                <Text style={{ fontSize: 16, color: 'white' }}>Ara</Text>
-              </TouchableOpacity>
+          <View style={{flexDirection:"row",justifyContent:"space-between"}}>
+            {restaurant.rating ?
+              <View style={styles.ratingView}>
+                <AntDesign name="star" size={20}
+                  style={styles.ratingIcon} />
+                <Text style={styles.ratingText}>{restaurant.rating} / 5</Text>
+              </View>
+              :
+              <View style={styles.noRatingView}>
+                <Text style={styles.noRatingText}>Yeni Restaurant!</Text>
+              </View>
+            }
+            <View style={styles.clockView}>
+              <AntDesign name="clockcircle" size={20}
+                style={styles.clockIcon} />
+              <Text style={{ fontSize: 14 ,alignSelf:"center"}}>Şuan Açık</Text>
             </View>
 
+
           </View>
+
+
+          {restaurant.formatted_address &&
+            <View style={styles.addressView}>
+              <Text style={{ fontSize: 14 }}>Adres : {restaurant.formatted_address}</Text>
+            </View>
+          }
+          {restaurant.formatted_phone_number &&
+            <View style={styles.phoneView}>
+              <View style={{ justifyContent: "center" }}>
+                <Text style={{ fontSize: 16, marginLeft: 10 }}>
+                  Telefon : {restaurant.formatted_phone_number}</Text>
+              </View>
+              <View >
+                <TouchableOpacity style={styles.phoneButtonView}
+                  onPress={() => Linking.openURL(
+                    'tel:' + restaurant.formatted_phone_number)}>
+                  <MaterialIcons name="call" size={20}
+                    style={styles.callIcon} />
+                  <Text style={{ fontSize: 16, color: 'white' }}>Ara</Text>
+                </TouchableOpacity>
+              </View>
+
+            </View>
+          }
           <View style={{ flex: 2 / 5 }}>
             <FlatList style={{ marginTop: 10, marginHorizontal: 5 }}
               data={restaurant.types}
@@ -129,20 +141,20 @@ const styles = StyleSheet.create({
   },
   mainView: { flex: 1, marginHorizontal: 10, marginTop: 20 },
   nameView: { paddingVertical: 10, marginBottom: 15, marginHorizontal: 5 },
-  clockView: { flexDirection: "row", justifyContent: "flex-end", marginRight: 10 },
+  clockView: { flexDirection: "row", justifyContent: "flex-end", marginRight: 10,alignSelf:"center" },
   clockIcon: {
     color: '#9bdeac', marginRight: 5, alignSelf: "center",
   },
   ratingView: {
-    flexDirection: "row", backgroundColor: '#97aeff',
-    borderRadius: 20, width: 140, marginLeft: 5
+    flexDirection: "row", backgroundColor: '#6CD5AD',alignSelf:"center",
+    borderRadius: 20, marginLeft: 5
   },
   ratingIcon: {
     color: 'white', marginLeft: 20, alignSelf: "center",
   },
   ratingText: {
     fontSize: 14, paddingLeft: 10, paddingVertical: 10, color: 'white',
-    fontWeight: "bold", fontSize: 14
+    fontWeight: "bold", fontSize: 14,paddingRight:20
   },
   addressView: {
     paddingVertical: 10,
@@ -181,7 +193,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
     borderBottomWidth: 1,
-    borderColor: '#EBEBEB', paddingBottom: 20
+    borderColor: '#EBEBEB', paddingBottom: 20, marginTop: 20
   },
   phoneButtonView: {
     paddingVertical: 10,
@@ -195,7 +207,7 @@ const styles = StyleSheet.create({
   restaurantNames: {
     color: 'white',
     fontWeight: "bold"
-  }
+  },
 });
 
 
