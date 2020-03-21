@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView } from 'react-native';
+import { Text, View, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView,PixelRatio } from 'react-native';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import { Linking } from 'expo';
@@ -9,7 +9,7 @@ const RestaurantScreen = ({ navigation }) => {
         { width, height } = window;
   let LATITUD_DELTA = 0.009;
   const LONGITUDE_DELTA = LATITUD_DELTA / 1000 * (width / height);
-  const DEFAULT_PADDING = { top: 40, right: 40, bottom: 40, left: 40 };
+  const DEFAULT_PADDING = { top: 60, right: 60, bottom: 60, left: 60 };
   let [location, setLocation] = useState(null),
       [markerLocation, setMarkerLocation] = useState(null),
       [isLoaded, setLoaded] = useState(false),
@@ -45,10 +45,19 @@ const RestaurantScreen = ({ navigation }) => {
   function fitMarkers(){
     if(mapRef)
     mapRef.fitToCoordinates([markerLocation, userLocation], {
-      edgePadding: DEFAULT_PADDING,
+      edgePadding: generateEdgePadding(DEFAULT_PADDING),
       animated: true,
     });
   }
+
+  function generateEdgePadding(edgePadding){
+
+    if(Platform.OS === 'ios'){ return edgePadding; }
+    
+    return { top: PixelRatio.getPixelSizeForLayoutSize(edgePadding.top), right: PixelRatio.getPixelSizeForLayoutSize(edgePadding.right),
+       left: PixelRatio.getPixelSizeForLayoutSize(edgePadding.left), bottom: PixelRatio.getPixelSizeForLayoutSize(edgePadding.bottom) }; 
+      };
+
   return (
 
     <SafeAreaView style={styles.container}>
@@ -97,7 +106,7 @@ const RestaurantScreen = ({ navigation }) => {
                     'tel:' + restaurant.formatted_phone_number)}>
                   <MaterialIcons name="call" size={20}
                     style={styles.callIcon} />
-                  <Text style={{ fontSize: 16, color: 'white' }}>Ara</Text>
+                  <Text style={{ fontSize: 16, color: 'white',fontWeight:"bold"}}>Ara</Text>
                 </TouchableOpacity>
               </View>
 
@@ -107,7 +116,7 @@ const RestaurantScreen = ({ navigation }) => {
 
           </View>
 
-          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} onMapReady={()=> setTimeout(()=>fitMarkers(),1000)} ref={(ref) => mapRef = ref}  >
+          <MapView style={styles.map} initialRegion={location} ref={(ref) => mapRef = ref} onMapReady={()=> setTimeout(()=>fitMarkers(),1000)} ref={(ref) => mapRef = ref}  >
             <Marker coordinate={markerLocation} tracksViewChanges={false}>
               <MaterialIcons name="location-on" size={50} style={{ color: '#F53B50' }}></MaterialIcons>
             </Marker>
@@ -141,9 +150,13 @@ const styles = StyleSheet.create({
   nameView: { paddingVertical: 10, marginBottom: 15, marginHorizontal: 5 },
   clockView: { flexDirection: "row", justifyContent: "flex-end", marginRight: 10, alignSelf: "center" },
   clockIcon: {
-    color: '#9bdeac', marginRight: 5, alignSelf: "center",
+    color: '#6CD5AD', marginRight: 5, alignSelf: "center",
   },
   ratingView: {
+    flexDirection: "row", backgroundColor: '#6CD5AD', alignSelf: "center",
+    borderRadius: 20, marginLeft: 5
+  },
+  noRatingView: {
     flexDirection: "row", backgroundColor: '#6CD5AD', alignSelf: "center",
     borderRadius: 20, marginLeft: 5
   },
@@ -153,6 +166,10 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 14, paddingLeft: 10, paddingVertical: 10, color: 'white',
     fontWeight: "bold", fontSize: 12, paddingRight: 20
+  },
+  noRatingText: {
+    fontSize: 14, paddingVertical: 10, color: 'white',
+    fontWeight: "bold",paddingHorizontal:30
   },
   addressView: {
     paddingVertical: 10,
@@ -197,7 +214,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: '#FB4D6A',
     borderRadius: 30,
-    paddingHorizontal: 25,
+    paddingHorizontal: 20,
     flexDirection: "row",
     marginLeft: 20,
     marginRight: 10

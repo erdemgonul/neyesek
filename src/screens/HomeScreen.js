@@ -3,30 +3,30 @@ import { Text, View, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAre
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import MapView, { Marker, Circle } from 'react-native-maps';
-import { FontAwesome,MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import DistanceSetter from '../components/DistanceSetter.js';
 import ListItem from '../components/ListItem.js';
 import SortModal from '../components/SortModal.js';
 import Loading from '../components/Loading.js';
 const HomeScreen = ({ navigation }) => {
   const url = 'http://192.168.1.193:3000',
-        window = Dimensions.get('window'),
-        { width, height } = window;
+    window = Dimensions.get('window'),
+    { width, height } = window;
   let LATITUD_DELTA = 0.009;
   const LONGITUDE_DELTA = LATITUD_DELTA / 1000 * (width / height);
-      
+
   let [location, setLocation] = useState(null),
-      [markerLocation, setMarkerLocation] = useState(null),
-      [isLoaded, setLoaded] = useState(false),
-      [modalVisible, setModalVisible] = useState(false),
-      [areaRadius, setAreaRadius] = useState(1000),
-      [restaurants, setRestaurants] = useState(null),
-      [visibleRestaurants, setVisibleRestaurants] = useState(null),
-      [sortMethod, setSortMethod] = useState(false),// false means rating, true means distance
-      [locationName, setLocationName] = useState('Mevcut Konum');
+    [markerLocation, setMarkerLocation] = useState(null),
+    [isLoaded, setLoaded] = useState(false),
+    [modalVisible, setModalVisible] = useState(false),
+    [areaRadius, setAreaRadius] = useState(1000),
+    [restaurants, setRestaurants] = useState(null),
+    [visibleRestaurants, setVisibleRestaurants] = useState(null),
+    [sortMethod, setSortMethod] = useState(false),// false means rating, true means distance
+    [locationName, setLocationName] = useState('Mevcut Konum');
 
   let mapRef = null,
-      animationRef = null;
+    animationRef = null;
 
   //first screen loaded
   useEffect(() => {
@@ -49,10 +49,8 @@ const HomeScreen = ({ navigation }) => {
           isLoading: false,
         });
         setLoaded(true);
-      } else {
+      } else
         fitZoomArea(areaRadius);
-      }
-
     }
   }, [visibleRestaurants]);
   //if location changes
@@ -139,8 +137,8 @@ const HomeScreen = ({ navigation }) => {
   }
   function getPlaceDetails(place_id) {
     const detailRestaurant = visibleRestaurants.find(rest => rest.place_id === place_id);
-      navigation.navigate('RestaurantScreen',
-        { restaurant: detailRestaurant ,userLocation:location})
+    navigation.navigate('RestaurantScreen',
+      { restaurant: detailRestaurant, userLocation: location })
   }
 
   function fitZoomArea(value) {
@@ -160,19 +158,19 @@ const HomeScreen = ({ navigation }) => {
           <DistanceSetter navigation={navigation} onSliderChange={newValue => setAreaRadius(newValue)}
             areaRadius={areaRadius} locationName={locationName} />
 
-          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} onMapReady={() => setTimeout(() => fitZoomArea(areaRadius),1000)}>
-              {visibleRestaurants && visibleRestaurants.length>0 && visibleRestaurants.map(marker => (
-                <Marker
-                  coordinate={{latitude:marker.location.coordinates[1],longitude:marker.location.coordinates[0]}}
-                  key={marker.place_id} tracksViewChanges={false}
-                />))
-              }
-             <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(50, 0, 0, 0.05)"
+          <MapView style={styles.map} region={location} ref={(ref) => mapRef = ref} onMapReady={() => setTimeout(() => fitZoomArea(areaRadius), 1000)}>
+            {visibleRestaurants && visibleRestaurants.length > 0 && visibleRestaurants.map(marker => (
+              <Marker
+                coordinate={{ latitude: marker.location.coordinates[1], longitude: marker.location.coordinates[0] }}
+                key={marker.place_id} tracksViewChanges={false}
+              />))
+            }
+            <Circle center={markerLocation} radius={areaRadius} fillColor="rgba(50, 0, 0, 0.05)"
               strokeColor="rgba(0,0,0,0.1)" zIndex={0} />
-            <Marker coordinate={markerLocation}  zIndex={3} tracksViewChanges={false}>
-              <MaterialIcons name="person-pin-circle" size={45} style={{color:'black'}}></MaterialIcons>
+            <Marker coordinate={markerLocation} zIndex={3} tracksViewChanges={false}>
+              <MaterialIcons name="person-pin-circle" size={45} style={{ color: 'black' }}></MaterialIcons>
             </Marker>
-           
+
           </MapView>
           <View style={styles.mainView}>
             <View style={styles.filterView}>
@@ -195,7 +193,7 @@ const HomeScreen = ({ navigation }) => {
         <Loading animationRef={animationRef} />
       }
       <SortModal modalVisible={modalVisible} sortMethod={sortMethod}
-        changeSortMethod={() => setSortMethod(!sortMethod)} sortRestaurants={() => sortRestaurants(false,visibleRestaurants)}
+        changeSortMethod={() => setSortMethod(!sortMethod)} sortRestaurants={() => sortRestaurants(false, visibleRestaurants)}
         backdropPress={() => setModalVisible(false)} />
     </SafeAreaView>
   );

@@ -87,7 +87,7 @@ const DistanceSetter = ({ navigation ,onSliderChange , areaRadius, locationName}
                 maximumValue={2000}
                 value={areaRadius}
                 step={250}
-                thumbTintColor={'#FF7478'}
+                thumbTintColor={'#F53B50'}
                 trackStyle={{ backgroundColor: '#EBEBEB' }}
                 minimumTrackTintColor={'#dbdbdb'}
               />
